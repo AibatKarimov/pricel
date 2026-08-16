@@ -1,0 +1,1190 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Прицел</title>
+<style>
+  :root {
+    --bg: #F3F5F8;
+    --surface: #FFFFFF;
+    --surface-2: #EAEDF2;
+    --ink: #1A2130;
+    --ink-soft: #5B6472;
+    --ink-faint: #8991A0;
+    --border: #DDE1E8;
+    --border-soft: #E7EAEF;
+    --accent: #3355E0;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #E7EBFC;
+    --accent-soft-ink: #2843C4;
+    --done: #1F8C57;
+    --done-soft: #E4F5EB;
+    --doing: #B9700A;
+    --doing-soft: #FBEEDA;
+    --todo: #6B7486;
+    --todo-soft: #E9EBF0;
+    --idea: #7B4FE0;
+    --idea-soft: #EFE8FD;
+    --danger: #C93A52;
+    --danger-soft: #FBE7EA;
+    --shadow: 0 1px 2px rgba(24, 31, 51, 0.06), 0 6px 20px -8px rgba(24, 31, 51, 0.12);
+    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10131B;
+      --surface: #171B25;
+      --surface-2: #1D2230;
+      --ink: #E7E9F0;
+      --ink-soft: #9AA2B4;
+      --ink-faint: #6B7386;
+      --border: #2A3040;
+      --border-soft: #232838;
+      --accent: #7690FF;
+      --accent-ink: #0E1424;
+      --accent-soft: #1E2542;
+      --accent-soft-ink: #AEBCFF;
+      --done: #3FBE7E;
+      --done-soft: #163024;
+      --doing: #E8964A;
+      --doing-soft: #33260F;
+      --todo: #9099AE;
+      --todo-soft: #232838;
+      --idea: #AF8CFA;
+      --idea-soft: #241D3D;
+      --danger: #F0687D;
+      --danger-soft: #331A22;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 28px -10px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #10131B;
+    --surface: #171B25;
+    --surface-2: #1D2230;
+    --ink: #E7E9F0;
+    --ink-soft: #9AA2B4;
+    --ink-faint: #6B7386;
+    --border: #2A3040;
+    --border-soft: #232838;
+    --accent: #7690FF;
+    --accent-ink: #0E1424;
+    --accent-soft: #1E2542;
+    --accent-soft-ink: #AEBCFF;
+    --done: #3FBE7E;
+    --done-soft: #163024;
+    --doing: #E8964A;
+    --doing-soft: #33260F;
+    --todo: #9099AE;
+    --todo-soft: #232838;
+    --idea: #AF8CFA;
+    --idea-soft: #241D3D;
+    --danger: #F0687D;
+    --danger-soft: #331A22;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 28px -10px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  button { font-family: inherit; }
+  input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+  a { color: var(--accent); }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  #app-inner { display: flex; min-height: 100vh; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    width: 272px;
+    flex: 0 0 272px;
+    background: var(--surface-2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 18px 14px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .brand-mark { flex: none; color: var(--accent); }
+  .brand-text h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand-text p { margin: 1px 0 0; font-size: 11.5px; color: var(--ink-faint); }
+
+  .project-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .project-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 7px;
+    position: relative;
+  }
+  .project-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    background: transparent;
+    border: none;
+    text-align: left;
+    padding: 8px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .project-btn:hover { background: var(--surface); }
+  .project-row.active .project-btn { background: var(--accent-soft); color: var(--accent-soft-ink); }
+  .project-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .project-meta { font-size: 11px; color: var(--ink-faint); }
+  .project-row.active .project-meta { color: var(--accent-soft-ink); opacity: 0.75; }
+  .project-del {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--ink-faint);
+    cursor: pointer;
+    opacity: 0.5;
+    margin-right: 4px;
+  }
+  .project-row:hover .project-del, .project-del:focus-visible { opacity: 1; }
+  .project-del:hover { background: var(--danger-soft); color: var(--danger); opacity: 1; }
+
+  .add-project { padding: 8px; }
+  .add-project-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 10px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 7px;
+    color: var(--ink-soft);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .add-project-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .add-project-form { display: flex; gap: 6px; }
+  .add-project-form input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 8px 9px;
+    border-radius: 7px;
+    border: 1px solid var(--accent);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .add-project-form button {
+    flex: none;
+    padding: 0 12px;
+    border: none;
+    border-radius: 7px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .sidebar-footer {
+    border-top: 1px solid var(--border-soft);
+    padding: 12px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .io-row { display: flex; gap: 6px; }
+  .io-btn {
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 8px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .io-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .save-status { font-size: 10.5px; color: var(--ink-faint); }
+  .save-hint { font-size: 10.5px; color: var(--ink-faint); line-height: 1.4; }
+
+  /* ---------- Mobile top bar ---------- */
+  .mobile-bar { display: none; }
+
+  /* ---------- Main ---------- */
+  .main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+
+  .main-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 28px 0;
+  }
+  .title-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .project-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 3px 6px;
+    margin-left: -7px;
+    min-width: 80px;
+    max-width: 60ch;
+  }
+  .project-title:hover { border-color: var(--border); }
+  .project-title:focus-visible { border-color: var(--accent); outline: none; background: var(--surface); }
+
+  .stat-chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 16px; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px 3px 7px;
+    border-radius: 100px;
+    background: var(--surface-2);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .chip b { font-variant-numeric: tabular-nums; color: var(--ink); }
+
+  .tabs { display: flex; gap: 4px; }
+  .tab-btn {
+    padding: 9px 4px;
+    margin-right: 18px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--ink-faint);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .content { padding: 20px 28px 60px; flex: 1 1 auto; }
+
+  /* ---------- Board ---------- */
+  .add-task-bar { margin-bottom: 18px; max-width: 640px; }
+  .add-task-bar form { display: flex; gap: 8px; }
+  .add-task-bar input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .add-task-bar input:focus-visible { border-color: var(--accent); }
+  .add-task-bar button {
+    flex: none;
+    padding: 0 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .add-task-bar button:hover { filter: brightness(1.06); }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+  .column-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 2px 2px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+  }
+  .column-head .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .column-head .count { margin-left: auto; font-family: var(--font-mono); font-weight: 600; color: var(--ink-faint); }
+
+  .card-list { display: flex; flex-direction: column; gap: 8px; min-height: 8px; }
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 10px 11px 9px;
+    box-shadow: var(--shadow);
+  }
+  .task-title { font-size: 13.5px; font-weight: 600; line-height: 1.4; word-break: break-word; }
+  .card-foot { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .card-date { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-faint); margin-right: auto; }
+  .icon-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 7px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .icon-btn.danger:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
+  .icon-btn.primary { border-color: var(--done); color: var(--done); }
+  .icon-btn.primary:hover { background: var(--done-soft); }
+  .icon-only { padding: 4px; }
+
+  .empty-col {
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 16px 10px;
+    text-align: center;
+    color: var(--ink-faint);
+    font-size: 12px;
+  }
+
+  /* ---------- Ideas & Links ---------- */
+  .panel-max { max-width: 640px; }
+  .add-idea-form, .add-link-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .add-link-form .row { display: flex; gap: 8px; }
+  .add-idea-form textarea, .add-link-form input {
+    padding: 9px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    resize: vertical;
+    min-height: 40px;
+  }
+  .add-link-form input { min-height: unset; flex: 1 1 0; min-width: 0; }
+  .add-idea-form textarea:focus-visible, .add-link-form input:focus-visible { border-color: var(--accent); }
+  .form-submit-row { display: flex; justify-content: flex-end; }
+  .form-submit-row button, .add-link-form button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 7px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .list-col { display: flex; flex-direction: column; gap: 8px; }
+  .idea-card, .link-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+    padding: 11px 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .idea-dot, .link-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex: none; margin-top: 6px;
+  }
+  .idea-dot { background: var(--idea); }
+  .link-dot { background: var(--accent); }
+  .idea-body, .link-body { flex: 1 1 auto; min-width: 0; }
+  .idea-text { font-size: 13.5px; white-space: pre-wrap; word-break: break-word; }
+  .link-title { font-size: 13.5px; font-weight: 600; word-break: break-word; }
+  .link-url {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+  .idea-foot, .link-foot { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .idea-date, .link-date { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-faint); margin-right: auto; }
+
+  /* ---------- Empty states ---------- */
+  .empty-state {
+    max-width: 420px;
+    margin: 40px auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .empty-state .brand-mark { color: var(--accent); opacity: 0.9; }
+  .empty-state h2 { font-size: 18px; font-weight: 700; }
+  .empty-state p { color: var(--ink-soft); font-size: 13.5px; margin: 0; }
+  .empty-state form { display: flex; gap: 8px; margin-top: 8px; width: 100%; max-width: 360px; }
+  .empty-state input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .empty-state button {
+    padding: 0 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .empty-tab { padding: 30px 10px; text-align: center; color: var(--ink-faint); font-size: 13px; }
+
+  /* ---------- Toasts ---------- */
+  #toasts {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 500;
+    box-shadow: var(--shadow);
+    max-width: 320px;
+    animation: toast-in 0.15s ease-out;
+  }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .toast button {
+    flex: none;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--bg) 40%, transparent);
+    color: var(--bg);
+    padding: 4px 9px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  .backdrop { display: none; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 780px) {
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 30;
+      transform: translateX(-100%);
+      transition: transform 0.18s ease;
+      box-shadow: var(--shadow);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .backdrop.open {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 12, 20, 0.4);
+      z-index: 25;
+    }
+    .mobile-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 6;
+    }
+    .mobile-bar button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 9px;
+      color: var(--ink);
+      cursor: pointer;
+      flex: none;
+    }
+    .mobile-bar .mobile-title { font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .main { height: auto; min-height: 100vh; }
+    .main-header { padding: 16px 16px 0; }
+    .content { padding: 16px 16px 50px; }
+    .board { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div id="app">
+  <div id="backdrop" class="backdrop"></div>
+  <div id="app-inner"></div>
+</div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "pricel.v1";
+  var uiSidebarOpen = false;
+  var uiActiveTab = "board";
+  var uiAddProjectOpen = false;
+  var downloadsApi = null;
+
+  var STATUS_LABEL = { todo: "К выполнению", doing: "В работе", done: "Готово" };
+  var STATUS_COLOR_VAR = { todo: "--todo", doing: "--doing", done: "--done" };
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+  function nowIso() { return new Date().toISOString(); }
+  function todayStamp() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function formatDate(iso) {
+    try {
+      return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+    } catch (e) { return ""; }
+  }
+  function formatTime(iso) {
+    try {
+      return new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    } catch (e) { return ""; }
+  }
+  function escapeHtml(str) {
+    return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+  function sanitizeUrl(raw) {
+    var url = String(raw || "").trim();
+    if (!url) return "";
+    if (/^https?:\/\//i.test(url)) return url;
+    if (/^[a-z][a-z0-9+.\-]*:/i.test(url)) return null;
+    return "https://" + url;
+  }
+  function hostnameOf(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ""); } catch (e) { return url; }
+  }
+
+  /* ---------- State ---------- */
+  var state = loadState();
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return { projects: [], activeId: null };
+      var parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.projects)) return { projects: [], activeId: null };
+      return parsed;
+    } catch (e) {
+      return { projects: [], activeId: null };
+    }
+  }
+  var lastSavedAt = null;
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      lastSavedAt = new Date();
+    } catch (e) {
+      showToast("Не удалось сохранить локально — освободите место в браузере.");
+    }
+  }
+  function activeProject() {
+    return state.projects.find(function (p) { return p.id === state.activeId; }) || null;
+  }
+  function projectStats(p) {
+    var total = p.tasks.length;
+    var done = p.tasks.filter(function (t) { return t.status === "done"; }).length;
+    var doing = p.tasks.filter(function (t) { return t.status === "doing"; }).length;
+    var todo = p.tasks.filter(function (t) { return t.status === "todo"; }).length;
+    return { total: total, done: done, doing: doing, todo: todo };
+  }
+
+  /* ---------- Toasts ---------- */
+  function showToast(message, undoFn) {
+    var container = document.getElementById("toasts");
+    var el = document.createElement("div");
+    el.className = "toast";
+    var text = document.createElement("span");
+    text.textContent = message;
+    el.appendChild(text);
+    var timer;
+    if (undoFn) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = "Отменить";
+      btn.addEventListener("click", function () {
+        clearTimeout(timer);
+        el.remove();
+        undoFn();
+      });
+      el.appendChild(btn);
+    }
+    container.appendChild(el);
+    timer = setTimeout(function () { el.remove(); }, 6000);
+  }
+
+  /* ---------- Mutations ---------- */
+  function createProject(name) {
+    var p = { id: uid(), name: name.trim() || "Без названия", createdAt: nowIso(), tasks: [], ideas: [], links: [] };
+    state.projects.push(p);
+    state.activeId = p.id;
+    uiActiveTab = "board";
+    save(); render();
+  }
+  function deleteProject(id) {
+    var idx = state.projects.findIndex(function (p) { return p.id === id; });
+    if (idx === -1) return;
+    var removed = state.projects[idx];
+    var wasActive = state.activeId === id;
+    state.projects.splice(idx, 1);
+    if (wasActive) state.activeId = state.projects.length ? state.projects[0].id : null;
+    save(); render();
+    showToast('Проект «' + removed.name + '» удалён', function () {
+      state.projects.splice(idx, 0, removed);
+      state.activeId = removed.id;
+      save(); render();
+    });
+  }
+  function renameProject(id, name) {
+    var p = state.projects.find(function (x) { return x.id === id; });
+    if (!p) return;
+    var clean = name.trim();
+    if (clean) p.name = clean;
+    save(); render();
+  }
+  function addTask(projectId, title) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p || !title.trim()) return;
+    p.tasks.unshift({ id: uid(), title: title.trim(), status: "todo", createdAt: nowIso() });
+    save(); render();
+  }
+  function setTaskStatus(projectId, taskId, status) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p) return;
+    var t = p.tasks.find(function (x) { return x.id === taskId; });
+    if (!t) return;
+    var prev = t.status;
+    t.status = status;
+    save(); render();
+    showToast("Задача перемещена: " + STATUS_LABEL[status], function () {
+      t.status = prev; save(); render();
+    });
+  }
+  function deleteTask(projectId, taskId) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p) return;
+    var idx = p.tasks.findIndex(function (x) { return x.id === taskId; });
+    if (idx === -1) return;
+    var removed = p.tasks[idx];
+    p.tasks.splice(idx, 1);
+    save(); render();
+    showToast("Задача удалена", function () {
+      p.tasks.splice(idx, 0, removed); save(); render();
+    });
+  }
+  function addIdea(projectId, text) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p || !text.trim()) return;
+    p.ideas.unshift({ id: uid(), text: text.trim(), createdAt: nowIso() });
+    save(); render();
+  }
+  function deleteIdea(projectId, ideaId) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p) return;
+    var idx = p.ideas.findIndex(function (x) { return x.id === ideaId; });
+    if (idx === -1) return;
+    var removed = p.ideas[idx];
+    p.ideas.splice(idx, 1);
+    save(); render();
+    showToast("Идея удалена", function () {
+      p.ideas.splice(idx, 0, removed); save(); render();
+    });
+  }
+  function ideaToTask(projectId, ideaId) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p) return;
+    var idx = p.ideas.findIndex(function (x) { return x.id === ideaId; });
+    if (idx === -1) return;
+    var idea = p.ideas[idx];
+    p.ideas.splice(idx, 1);
+    p.tasks.unshift({ id: uid(), title: idea.text, status: "todo", createdAt: nowIso() });
+    uiActiveTab = "board";
+    save(); render();
+    showToast("Идея перенесена в задачи");
+  }
+  function addLink(projectId, title, rawUrl) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p) return;
+    var url = sanitizeUrl(rawUrl);
+    if (url === null) { showToast("Ссылка должна начинаться с http:// или https://"); return; }
+    if (!url) { showToast("Укажите ссылку"); return; }
+    p.links.unshift({ id: uid(), title: title.trim() || hostnameOf(url), url: url, createdAt: nowIso() });
+    save(); render();
+  }
+  function deleteLink(projectId, linkId) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p) return;
+    var idx = p.links.findIndex(function (x) { return x.id === linkId; });
+    if (idx === -1) return;
+    var removed = p.links[idx];
+    p.links.splice(idx, 1);
+    save(); render();
+    showToast("Ссылка удалена", function () {
+      p.links.splice(idx, 0, removed); save(); render();
+    });
+  }
+
+  /* ---------- Export / Import ---------- */
+  function handleExport() {
+    var data = JSON.stringify(state, null, 2);
+    var filename = "pricel-backup-" + todayStamp() + ".json";
+    if (downloadsApi) {
+      downloadsApi.save({ filename: filename, data: data }).then(function () {
+        showToast("Резервная копия сохранена");
+      }).catch(function (err) {
+        if (err && err.code === "declined") { showToast("Экспорт отменён"); }
+        else { fallbackCopyExport(data); }
+      });
+    } else {
+      fallbackCopyExport(data);
+    }
+  }
+  function fallbackCopyExport(data) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(data).then(function () {
+        showToast("Скачивание недоступно здесь — JSON скопирован в буфер обмена");
+      }).catch(function () {
+        showToast("Не удалось экспортировать данные");
+      });
+    } else {
+      showToast("Экспорт недоступен в этом окне просмотра");
+    }
+  }
+  function handleImportFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var parsed = JSON.parse(String(reader.result));
+        if (!parsed || !Array.isArray(parsed.projects)) throw new Error("bad shape");
+        var prevState = deepClone(state);
+        state = { projects: parsed.projects, activeId: parsed.activeId || (parsed.projects[0] ? parsed.projects[0].id : null) };
+        uiActiveTab = "board";
+        save(); render();
+        showToast("Данные импортированы", function () { state = prevState; save(); render(); });
+      } catch (e) {
+        showToast("Не удалось прочитать файл — это не резервная копия «Прицела»?");
+      }
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+  /* ---------- Icons ---------- */
+  var ICONS = {
+    target: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg>',
+    plus: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 2.5V13.5M2.5 8H13.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    trash: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 4.5H13M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5V13a1 1 0 0 0 1 1H10.5a1 1 0 0 0 1-1V4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    arrowRight: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    arrowLeft: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    check: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    undo: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4.5V8.5H8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.6 8.5A5 5 0 1 0 5.5 4.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    download: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 2V10.5M8 10.5L4.8 7.3M8 10.5L11.2 7.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    upload: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 10.5V2M8 2L4.8 5.2M8 2L11.2 5.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    menu: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5H13.5M2.5 8H13.5M2.5 11.5H13.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    link: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.7 9.3L9.3 6.7M6.3 4.5L7.2 3.6a2.3 2.3 0 0 1 3.3 3.3l-1 1M9.7 11.5l-.9.9a2.3 2.3 0 0 1-3.3-3.3l1-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  };
+
+  /* ---------- Render ---------- */
+  function render() {
+    var root = document.getElementById("app-inner");
+    root.innerHTML = renderSidebarHtml() + renderMainHtml();
+    document.getElementById("backdrop").className = "backdrop" + (uiSidebarOpen ? " open" : "");
+    bindImportInput();
+  }
+
+  function renderSidebarHtml() {
+    var rows = state.projects.map(function (p) {
+      var stats = projectStats(p);
+      var active = p.id === state.activeId;
+      return '' +
+        '<div class="project-row' + (active ? " active" : "") + '">' +
+          '<button type="button" class="project-btn" data-action="select-project" data-id="' + p.id + '">' +
+            '<span class="project-name">' + escapeHtml(p.name) + '</span>' +
+            '<span class="project-meta tabular">' + stats.done + '/' + stats.total + ' задач · ' + p.ideas.length + ' идей</span>' +
+          '</button>' +
+          '<button type="button" class="project-del" data-action="delete-project" data-id="' + p.id + '" aria-label="Удалить проект ' + escapeHtml(p.name) + '">' + ICONS.trash + '</button>' +
+        '</div>';
+    }).join("");
+
+    var addForm = uiAddProjectOpen
+      ? '<form class="add-project-form" data-action="add-project-form"><input type="text" name="name" placeholder="Название проекта" autofocus /><button type="submit">' + ICONS.plus + '</button></form>'
+      : '<button type="button" class="add-project-btn" data-action="open-add-project">' + ICONS.plus + ' Новый проект</button>';
+
+    var savedLabel = lastSavedAt ? "Сохранено · " + formatTime(lastSavedAt.toISOString()) : "Ещё не сохранялось";
+
+    return '' +
+      '<div class="sidebar' + (uiSidebarOpen ? " open" : "") + '" id="sidebar">' +
+        '<div class="brand">' +
+          '<span class="brand-mark">' + ICONS.target + '</span>' +
+          '<div class="brand-text"><h1>Прицел</h1><p>задачи по таргету</p></div>' +
+        '</div>' +
+        '<div class="project-list">' + rows + '</div>' +
+        '<div class="add-project">' + addForm + '</div>' +
+        '<div class="sidebar-footer">' +
+          '<div class="io-row">' +
+            '<button type="button" class="io-btn" data-action="export">' + ICONS.download + ' Экспорт</button>' +
+            '<button type="button" class="io-btn" data-action="import">' + ICONS.upload + ' Импорт</button>' +
+            '<input type="file" id="import-input" accept="application/json,.json" class="sr-only" />' +
+          '</div>' +
+          '<div class="save-status tabular">' + savedLabel + '</div>' +
+          '<div class="save-hint">Данные хранятся в этом браузере. Чтобы перенести их на другое устройство — экспортируйте файл и импортируйте его там.</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderMainHtml() {
+    var p = activeProject();
+    var mobileBar = '' +
+      '<div class="mobile-bar">' +
+        '<button type="button" data-action="toggle-sidebar" aria-label="Проекты">' + ICONS.menu + '</button>' +
+        '<span class="mobile-title">' + (p ? escapeHtml(p.name) : "Прицел") + '</span>' +
+      '</div>';
+
+    if (!p) {
+      return '<div class="main">' + mobileBar +
+        '<div class="content">' +
+          '<div class="empty-state">' +
+            '<span class="brand-mark">' + ICONS.target + '</span>' +
+            '<h2>Начните с первого проекта</h2>' +
+            '<p>Проект — это одна рекламная кампания или клиент. Внутри — доска задач, идеи и ссылки на документы.</p>' +
+            '<form data-action="add-project-form">' +
+              '<input type="text" name="name" placeholder="Например, «Instagram — стоматология»" />' +
+              '<button type="submit">Создать</button>' +
+            '</form>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    var stats = projectStats(p);
+    var chips = '' +
+      '<span class="chip"><span class="dot" style="background:var(--todo)"></span>К выполнению&nbsp;<b class="tabular">' + stats.todo + '</b></span>' +
+      '<span class="chip"><span class="dot" style="background:var(--doing)"></span>В работе&nbsp;<b class="tabular">' + stats.doing + '</b></span>' +
+      '<span class="chip"><span class="dot" style="background:var(--done)"></span>Готово&nbsp;<b class="tabular">' + stats.done + '</b></span>' +
+      '<span class="chip"><span class="dot" style="background:var(--idea)"></span>Идей&nbsp;<b class="tabular">' + p.ideas.length + '</b></span>';
+
+    var tabs = ["board", "ideas", "links"].map(function (key) {
+      var labels = { board: "Доска", ideas: "Идеи", links: "Ссылки" };
+      return '<button type="button" class="tab-btn' + (uiActiveTab === key ? " active" : "") + '" data-action="set-tab" data-tab="' + key + '">' + labels[key] + '</button>';
+    }).join("");
+
+    var body;
+    if (uiActiveTab === "board") body = renderBoard(p);
+    else if (uiActiveTab === "ideas") body = renderIdeas(p);
+    else body = renderLinks(p);
+
+    return '<div class="main">' + mobileBar +
+      '<div class="main-header">' +
+        '<div class="title-row">' +
+          '<input type="text" class="project-title" data-action="rename-project" data-id="' + p.id + '" value="' + escapeHtml(p.name) + '" aria-label="Название проекта" />' +
+        '</div>' +
+        '<div class="stat-chips">' + chips + '</div>' +
+        '<div class="tabs">' + tabs + '</div>' +
+      '</div>' +
+      '<div class="content">' + body + '</div>' +
+    '</div>';
+  }
+
+  function renderBoard(p) {
+    var addBar = '' +
+      '<div class="add-task-bar">' +
+        '<form data-action="add-task-form" data-id="' + p.id + '">' +
+          '<input type="text" name="title" placeholder="Новая задача…" />' +
+          '<button type="submit">' + ICONS.plus + ' Добавить</button>' +
+        '</form>' +
+      '</div>';
+
+    var columns = ["todo", "doing", "done"].map(function (status) {
+      var tasks = p.tasks.filter(function (t) { return t.status === status; });
+      var cards = tasks.map(function (t) { return renderTaskCard(p, t); }).join("");
+      if (!cards) cards = '<div class="empty-col">Пусто</div>';
+      return '' +
+        '<div class="column">' +
+          '<div class="column-head"><span class="dot" style="background:var(' + STATUS_COLOR_VAR[status] + ')"></span>' + STATUS_LABEL[status] + '<span class="count tabular">' + tasks.length + '</span></div>' +
+          '<div class="card-list">' + cards + '</div>' +
+        '</div>';
+    }).join("");
+
+    return addBar + '<div class="board">' + columns + '</div>';
+  }
+
+  function renderTaskCard(p, t) {
+    var actions = "";
+    if (t.status === "todo") {
+      actions = '<button type="button" class="icon-btn" data-action="task-status" data-pid="' + p.id + '" data-tid="' + t.id + '" data-status="doing">' + ICONS.arrowRight + ' Начать</button>';
+    } else if (t.status === "doing") {
+      actions = '' +
+        '<button type="button" class="icon-btn" data-action="task-status" data-pid="' + p.id + '" data-tid="' + t.id + '" data-status="todo">' + ICONS.arrowLeft + '</button>' +
+        '<button type="button" class="icon-btn primary" data-action="task-status" data-pid="' + p.id + '" data-tid="' + t.id + '" data-status="done">' + ICONS.check + ' Готово</button>';
+    } else {
+      actions = '<button type="button" class="icon-btn" data-action="task-status" data-pid="' + p.id + '" data-tid="' + t.id + '" data-status="doing">' + ICONS.undo + ' Вернуть</button>';
+    }
+    return '' +
+      '<div class="task-card">' +
+        '<div class="task-title">' + escapeHtml(t.title) + '</div>' +
+        '<div class="card-foot">' +
+          '<span class="card-date tabular">' + formatDate(t.createdAt) + '</span>' +
+          actions +
+          '<button type="button" class="icon-btn danger icon-only" data-action="delete-task" data-pid="' + p.id + '" data-tid="' + t.id + '" aria-label="Удалить задачу">' + ICONS.trash + '</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderIdeas(p) {
+    var form = '' +
+      '<form class="add-idea-form" data-action="add-idea-form" data-id="' + p.id + '">' +
+        '<textarea name="text" rows="2" placeholder="Запишите идею — доработаете позже…"></textarea>' +
+        '<div class="form-submit-row"><button type="submit">' + ICONS.plus + ' Добавить идею</button></div>' +
+      '</form>';
+    var items = p.ideas.map(function (idea) {
+      return '' +
+        '<div class="idea-card">' +
+          '<span class="idea-dot"></span>' +
+          '<div class="idea-body">' +
+            '<div class="idea-text">' + escapeHtml(idea.text) + '</div>' +
+            '<div class="idea-foot">' +
+              '<span class="idea-date tabular">' + formatDate(idea.createdAt) + '</span>' +
+              '<button type="button" class="icon-btn" data-action="idea-to-task" data-pid="' + p.id + '" data-iid="' + idea.id + '">' + ICONS.arrowRight + ' В задачи</button>' +
+              '<button type="button" class="icon-btn danger icon-only" data-action="delete-idea" data-pid="' + p.id + '" data-iid="' + idea.id + '" aria-label="Удалить идею">' + ICONS.trash + '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }).join("");
+    if (!items) items = '<div class="empty-tab">Идей пока нет — самое время накидать пару мыслей о новых аудиториях или креативах.</div>';
+    return '<div class="panel-max">' + form + '<div class="list-col">' + items + '</div></div>';
+  }
+
+  function renderLinks(p) {
+    var form = '' +
+      '<form class="add-link-form" data-action="add-link-form" data-id="' + p.id + '">' +
+        '<div class="row"><input type="text" name="title" placeholder="Название (необязательно)" /></div>' +
+        '<div class="row">' +
+          '<input type="url" name="url" placeholder="https://…" style="flex:1" />' +
+          '<button type="submit">' + ICONS.plus + ' Добавить</button>' +
+        '</div>' +
+      '</form>';
+    var items = p.links.map(function (link) {
+      return '' +
+        '<div class="link-card">' +
+          '<span class="link-dot">' + ICONS.link + '</span>' +
+          '<div class="link-body">' +
+            '<a class="link-title" href="' + escapeHtml(link.url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(link.title) + '</a>' +
+            '<span class="link-url">' + escapeHtml(link.url) + '</span>' +
+            '<div class="link-foot">' +
+              '<span class="link-date tabular">' + formatDate(link.createdAt) + '</span>' +
+              '<button type="button" class="icon-btn danger icon-only" data-action="delete-link" data-pid="' + p.id + '" data-lid="' + link.id + '" aria-label="Удалить ссылку">' + ICONS.trash + '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }).join("");
+    if (!items) items = '<div class="empty-tab">Пока нет ссылок — добавьте бриф, медиаплан или таблицу с результатами.</div>';
+    return '<div class="panel-max">' + form + '<div class="list-col">' + items + '</div></div>';
+  }
+
+  /* ---------- Events ---------- */
+  function bindRootEventsOnce(root) {
+    root.addEventListener("click", onClick);
+    root.addEventListener("submit", onSubmit);
+    root.addEventListener("change", onChange);
+  }
+  function bindImportInput() {
+    var importInput = document.getElementById("import-input");
+    if (importInput) {
+      importInput.addEventListener("change", function () {
+        if (importInput.files && importInput.files[0]) handleImportFile(importInput.files[0]);
+        importInput.value = "";
+      });
+    }
+  }
+
+  function onClick(e) {
+    var el = e.target.closest("[data-action]");
+    if (!el) return;
+    var action = el.getAttribute("data-action");
+    switch (action) {
+      case "select-project":
+        state.activeId = el.getAttribute("data-id");
+        uiActiveTab = "board";
+        uiSidebarOpen = false;
+        save(); render();
+        break;
+      case "delete-project":
+        e.stopPropagation();
+        deleteProject(el.getAttribute("data-id"));
+        break;
+      case "open-add-project":
+        uiAddProjectOpen = true; render();
+        var afterOpen = document.querySelector(".add-project-form input");
+        if (afterOpen) afterOpen.focus();
+        break;
+      case "toggle-sidebar":
+        uiSidebarOpen = !uiSidebarOpen; render();
+        break;
+      case "set-tab":
+        uiActiveTab = el.getAttribute("data-tab"); render();
+        break;
+      case "task-status":
+        setTaskStatus(el.getAttribute("data-pid"), el.getAttribute("data-tid"), el.getAttribute("data-status"));
+        break;
+      case "delete-task":
+        deleteTask(el.getAttribute("data-pid"), el.getAttribute("data-tid"));
+        break;
+      case "idea-to-task":
+        ideaToTask(el.getAttribute("data-pid"), el.getAttribute("data-iid"));
+        break;
+      case "delete-idea":
+        deleteIdea(el.getAttribute("data-pid"), el.getAttribute("data-iid"));
+        break;
+      case "delete-link":
+        deleteLink(el.getAttribute("data-pid"), el.getAttribute("data-lid"));
+        break;
+      case "export":
+        handleExport();
+        break;
+      case "import":
+        var input = document.getElementById("import-input");
+        if (input) input.click();
+        break;
+    }
+  }
+  document.getElementById("backdrop").addEventListener("click", function () { uiSidebarOpen = false; render(); });
+
+  function onSubmit(e) {
+    var form = e.target.closest("[data-action]");
+    if (!form) return;
+    e.preventDefault();
+    var action = form.getAttribute("data-action");
+    if (action === "add-project-form") {
+      var name = form.elements["name"].value;
+      uiAddProjectOpen = false;
+      if (name.trim()) createProject(name);
+      else render();
+    } else if (action === "add-task-form") {
+      addTask(form.getAttribute("data-id"), form.elements["title"].value);
+    } else if (action === "add-idea-form") {
+      addIdea(form.getAttribute("data-id"), form.elements["text"].value);
+    } else if (action === "add-link-form") {
+      addLink(form.getAttribute("data-id"), form.elements["title"].value, form.elements["url"].value);
+    }
+  }
+
+  function onChange(e) {
+    var el = e.target.closest("[data-action='rename-project']");
+    if (el) renameProject(el.getAttribute("data-id"), el.value);
+  }
+
+  /* ---------- Capabilities ---------- */
+  function initCapabilities() {
+    try {
+      if (window.claude && typeof window.claude.use === "function") {
+        window.claude.use("downloads").then(function (api) {
+          downloadsApi = api;
+        }).catch(function () { downloadsApi = null; });
+      }
+    } catch (e) { downloadsApi = null; }
+  }
+
+  bindRootEventsOnce(document.getElementById("app-inner"));
+  initCapabilities();
+  render();
+})();
+</script>
