@@ -136,6 +136,34 @@
   .brand-text h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
   .brand-text p { margin: 1px 0 0; font-size: 11.5px; color: var(--ink-faint); }
 
+  .today-nav-wrap { padding: 10px 10px 0; }
+  .today-nav {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 10px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .today-nav:hover { background: var(--surface); }
+  .today-nav.active { background: var(--accent-soft); color: var(--accent-soft-ink); }
+  .today-nav-count {
+    margin-left: auto;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 100px;
+  }
+  .today-nav.active .today-nav-count { background: var(--accent-soft-ink); color: var(--accent-soft); }
+
   .project-list {
     flex: 1 1 auto;
     overflow-y: auto;
@@ -371,6 +399,29 @@
 
   .content { padding: 20px 28px 60px; flex: 1 1 auto; }
 
+  /* ---------- Today page ---------- */
+  .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .page-subtitle { margin: 4px 0 18px; font-size: 13px; color: var(--ink-soft); }
+  .today-group { max-width: 640px; margin-bottom: 22px; }
+  .today-group-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 4px 0 10px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+    text-align: left;
+  }
+  .today-group-head:hover { color: var(--accent); }
+  .today-group-count { margin-left: auto; font-family: var(--font-mono); font-weight: 600; color: var(--ink-faint); }
+
   /* ---------- Board ---------- */
   .add-task-bar { margin-bottom: 18px; max-width: 640px; }
   .add-task-bar form { display: flex; gap: 8px; }
@@ -395,6 +446,10 @@
     cursor: pointer;
   }
   .add-task-bar button:hover { filter: brightness(1.06); }
+  .add-task-bar input[type="date"].add-task-deadline {
+    flex: 0 0 152px;
+    color: var(--ink-soft);
+  }
 
   .board {
     display: grid;
@@ -425,8 +480,26 @@
     box-shadow: var(--shadow);
   }
   .task-title { font-size: 13.5px; font-weight: 600; line-height: 1.4; word-break: break-word; }
-  .card-foot { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .task-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 7px; }
+  .card-foot { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 8px; }
   .card-date { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-faint); margin-right: auto; }
+  .deadline-input {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--ink-faint);
+    width: 116px;
+    cursor: pointer;
+  }
+  .deadline-input.has-value { border-style: solid; }
+  .deadline-input::-webkit-calendar-picker-indicator { opacity: 0.55; cursor: pointer; }
+  .deadline-input.state-overdue { border-color: var(--danger); background: var(--danger-soft); color: var(--danger); }
+  .deadline-input.state-today { border-color: var(--doing); background: var(--doing-soft); color: var(--doing); }
+  .deadline-input.state-upcoming { border-color: var(--border); background: var(--surface-2); color: var(--ink-soft); }
+  .deadline-input.state-done { border-color: var(--border-soft); background: transparent; color: var(--ink-faint); }
   .icon-btn {
     display: flex;
     align-items: center;
@@ -664,6 +737,7 @@
   var uiSidebarOpen = false;
   var uiActiveTab = "board";
   var uiAddProjectOpen = false;
+  var uiView = "today";
   var downloadsApi = null;
 
   var STATUS_LABEL = { todo: "К выполнению", doing: "В работе", done: "Готово" };
@@ -686,6 +760,19 @@
     try {
       return new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
     } catch (e) { return ""; }
+  }
+  function formatDeadline(dateStr) {
+    try {
+      var d = new Date(dateStr + "T00:00:00");
+      return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+    } catch (e) { return dateStr; }
+  }
+  function deadlineState(task) {
+    if (!task.deadline) return "none";
+    if (task.status === "done") return "done";
+    if (task.deadline < todayStamp()) return "overdue";
+    if (task.deadline === todayStamp()) return "today";
+    return "upcoming";
   }
   function escapeHtml(str) {
     return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
@@ -811,6 +898,7 @@
     state.projects.push(p);
     state.activeId = p.id;
     uiActiveTab = "board";
+    uiView = "project";
     save(); render();
   }
   function deleteProject(id) {
@@ -834,10 +922,10 @@
     if (clean) p.name = clean;
     save(); render();
   }
-  function addTask(projectId, title) {
+  function addTask(projectId, title, deadline) {
     var p = state.projects.find(function (x) { return x.id === projectId; });
     if (!p || !title.trim()) return;
-    p.tasks.unshift({ id: uid(), title: title.trim(), status: "todo", createdAt: nowIso() });
+    p.tasks.unshift({ id: uid(), title: title.trim(), status: "todo", createdAt: nowIso(), completedAt: null, deadline: deadline || null });
     save(); render();
   }
   function setTaskStatus(projectId, taskId, status) {
@@ -845,12 +933,22 @@
     if (!p) return;
     var t = p.tasks.find(function (x) { return x.id === taskId; });
     if (!t) return;
-    var prev = t.status;
+    var prevStatus = t.status;
+    var prevCompletedAt = t.completedAt;
     t.status = status;
+    t.completedAt = status === "done" ? nowIso() : null;
     save(); render();
     showToast("Задача перемещена: " + STATUS_LABEL[status], function () {
-      t.status = prev; save(); render();
+      t.status = prevStatus; t.completedAt = prevCompletedAt; save(); render();
     });
+  }
+  function setTaskDeadline(projectId, taskId, deadline) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p) return;
+    var t = p.tasks.find(function (x) { return x.id === taskId; });
+    if (!t) return;
+    t.deadline = deadline || null;
+    save(); render();
   }
   function deleteTask(projectId, taskId) {
     var p = state.projects.find(function (x) { return x.id === projectId; });
@@ -973,8 +1071,35 @@
     upload: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 10.5V2M8 2L4.8 5.2M8 2L11.2 5.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
     menu: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5H13.5M2.5 8H13.5M2.5 11.5H13.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
     link: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.7 9.3L9.3 6.7M6.3 4.5L7.2 3.6a2.3 2.3 0 0 1 3.3 3.3l-1 1M9.7 11.5l-.9.9a2.3 2.3 0 0 1-3.3-3.3l1-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    lock: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="7.5" width="9" height="6" rx="1.2" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7.5V5.5a2.5 2.5 0 0 1 5 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>'
+    lock: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="7.5" width="9" height="6" rx="1.2" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7.5V5.5a2.5 2.5 0 0 1 5 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    today: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 6.5H13.5" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 2V4.5M10.5 2V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="10" r="1.1" fill="currentColor"/></svg>'
   };
+
+  /* ---------- Today aggregation ---------- */
+  function todayMatch(t) {
+    if (t.status === "doing") return true;
+    if (t.deadline && t.status !== "done" && t.deadline <= todayStamp()) return true;
+    return false;
+  }
+  function todayRank(t) {
+    var ds = deadlineState(t);
+    if (ds === "overdue") return 0;
+    if (ds === "today") return 1;
+    return 2;
+  }
+  function getTodayGroups() {
+    var groups = [];
+    var total = 0;
+    state.projects.forEach(function (p) {
+      var tasks = p.tasks.filter(todayMatch).slice().sort(function (a, b) {
+        var ra = todayRank(a), rb = todayRank(b);
+        if (ra !== rb) return ra - rb;
+        return (a.deadline || "") < (b.deadline || "") ? -1 : 1;
+      });
+      if (tasks.length) { groups.push({ project: p, tasks: tasks }); total += tasks.length; }
+    });
+    return { groups: groups, total: total };
+  }
 
   /* ---------- Render ---------- */
   function render() {
@@ -987,7 +1112,7 @@
   function renderSidebarHtml() {
     var rows = state.projects.map(function (p) {
       var stats = projectStats(p);
-      var active = p.id === state.activeId;
+      var active = uiView === "project" && p.id === state.activeId;
       return '' +
         '<div class="project-row' + (active ? " active" : "") + '">' +
           '<button type="button" class="project-btn" data-action="select-project" data-id="' + p.id + '">' +
@@ -1003,12 +1128,19 @@
       : '<button type="button" class="add-project-btn" data-action="open-add-project">' + ICONS.plus + ' Новый проект</button>';
 
     var savedLabel = lastSavedAt ? "Сохранено · " + formatTime(lastSavedAt.toISOString()) : "Ещё не сохранялось";
+    var todayTotal = getTodayGroups().total;
 
     return '' +
       '<div class="sidebar' + (uiSidebarOpen ? " open" : "") + '" id="sidebar">' +
         '<div class="brand">' +
           '<span class="brand-mark">' + ICONS.target + '</span>' +
           '<div class="brand-text"><h1>Прицел</h1><p>задачи по таргету</p></div>' +
+        '</div>' +
+        '<div class="today-nav-wrap">' +
+          '<button type="button" class="today-nav' + (uiView === "today" ? " active" : "") + '" data-action="view-today">' +
+            ICONS.today + '<span class="today-nav-label">Сегодня</span>' +
+            (todayTotal ? '<span class="today-nav-count tabular">' + todayTotal + '</span>' : '') +
+          '</button>' +
         '</div>' +
         '<div class="project-list">' + rows + '</div>' +
         '<div class="add-project">' + addForm + '</div>' +
@@ -1025,7 +1157,44 @@
       '</div>';
   }
 
+  function renderTodayHtml() {
+    var mobileBar = '' +
+      '<div class="mobile-bar">' +
+        '<button type="button" data-action="toggle-sidebar" aria-label="Проекты">' + ICONS.menu + '</button>' +
+        '<span class="mobile-title">Сегодня</span>' +
+      '</div>';
+    var dateLabel = new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+    var data = getTodayGroups();
+    var body;
+    if (!data.groups.length) {
+      body = '' +
+        '<div class="empty-state">' +
+          '<span class="brand-mark">' + ICONS.today + '</span>' +
+          '<h2>На сегодня ничего не горит</h2>' +
+          '<p>Здесь появятся задачи с дедлайном сегодня или просроченные, а также всё, что сейчас «в работе» — по всем проектам сразу.</p>' +
+        '</div>';
+    } else {
+      body = data.groups.map(function (g) {
+        return '' +
+          '<div class="today-group">' +
+            '<button type="button" class="today-group-head" data-action="select-project" data-id="' + g.project.id + '">' +
+              escapeHtml(g.project.name) + '<span class="today-group-count tabular">' + g.tasks.length + '</span>' +
+            '</button>' +
+            '<div class="card-list">' + g.tasks.map(function (t) { return renderTaskCard(g.project, t); }).join("") + '</div>' +
+          '</div>';
+      }).join("");
+    }
+    return '<div class="main">' + mobileBar +
+      '<div class="main-header">' +
+        '<h1 class="page-title">Сегодня</h1>' +
+        '<p class="page-subtitle">' + dateLabel + ' · дедлайны и всё, что в работе</p>' +
+      '</div>' +
+      '<div class="content">' + body + '</div>' +
+    '</div>';
+  }
+
   function renderMainHtml() {
+    if (uiView === "today" && state.projects.length) return renderTodayHtml();
     var p = activeProject();
     var mobileBar = '' +
       '<div class="mobile-bar">' +
@@ -1083,6 +1252,7 @@
       '<div class="add-task-bar">' +
         '<form data-action="add-task-form" data-id="' + p.id + '">' +
           '<input type="text" name="title" placeholder="Новая задача…" />' +
+          '<input type="date" name="deadline" class="add-task-deadline" aria-label="Дедлайн (необязательно)" />' +
           '<button type="submit">' + ICONS.plus + ' Добавить</button>' +
         '</form>' +
       '</div>';
@@ -1112,11 +1282,17 @@
     } else {
       actions = '<button type="button" class="icon-btn" data-action="task-status" data-pid="' + p.id + '" data-tid="' + t.id + '" data-status="doing">' + ICONS.undo + ' Вернуть</button>';
     }
+    var dateText = formatDate(t.createdAt);
+    if (t.status === "done" && t.completedAt) dateText += " → " + formatDate(t.completedAt);
+    var dstate = deadlineState(t);
     return '' +
       '<div class="task-card">' +
         '<div class="task-title">' + escapeHtml(t.title) + '</div>' +
+        '<div class="task-meta">' +
+          '<span class="card-date tabular">' + dateText + '</span>' +
+          '<input type="date" class="deadline-input state-' + dstate + (t.deadline ? ' has-value' : '') + '" value="' + (t.deadline || "") + '" data-action="set-deadline" data-pid="' + p.id + '" data-tid="' + t.id + '" aria-label="Дедлайн" />' +
+        '</div>' +
         '<div class="card-foot">' +
-          '<span class="card-date tabular">' + formatDate(t.createdAt) + '</span>' +
           actions +
           '<button type="button" class="icon-btn danger icon-only" data-action="delete-task" data-pid="' + p.id + '" data-tid="' + t.id + '" aria-label="Удалить задачу">' + ICONS.trash + '</button>' +
         '</div>' +
@@ -1198,8 +1374,14 @@
       case "select-project":
         state.activeId = el.getAttribute("data-id");
         uiActiveTab = "board";
+        uiView = "project";
         uiSidebarOpen = false;
         save(); render();
+        break;
+      case "view-today":
+        uiView = "today";
+        uiSidebarOpen = false;
+        render();
         break;
       case "delete-project":
         e.stopPropagation();
@@ -1256,7 +1438,7 @@
       if (name.trim()) createProject(name);
       else render();
     } else if (action === "add-task-form") {
-      addTask(form.getAttribute("data-id"), form.elements["title"].value);
+      addTask(form.getAttribute("data-id"), form.elements["title"].value, form.elements["deadline"].value);
     } else if (action === "add-idea-form") {
       addIdea(form.getAttribute("data-id"), form.elements["text"].value);
     } else if (action === "add-link-form") {
@@ -1266,7 +1448,9 @@
 
   function onChange(e) {
     var el = e.target.closest("[data-action='rename-project']");
-    if (el) renameProject(el.getAttribute("data-id"), el.value);
+    if (el) { renameProject(el.getAttribute("data-id"), el.value); return; }
+    var dl = e.target.closest("[data-action='set-deadline']");
+    if (dl) setTaskDeadline(dl.getAttribute("data-pid"), dl.getAttribute("data-tid"), dl.value);
   }
 
   /* ---------- Capabilities ---------- */
