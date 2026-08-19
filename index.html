@@ -1885,6 +1885,7 @@
   bindRootEventsOnce(document.getElementById("app-inner"));
   initCapabilities();
   if (isUnlocked()) {
+    if (!getStoredCode()) setStoredCode(PASSWORD);
     ensureModifiedAtSeeded();
     render();
     syncPull();
