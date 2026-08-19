@@ -171,7 +171,7 @@
   .brand-text h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
   .brand-text p { margin: 1px 0 0; font-size: 11.5px; color: var(--ink-faint); }
 
-  .today-nav-wrap { padding: 10px 10px 0; display: flex; flex-direction: column; gap: 2px; }
+  .today-nav-wrap { padding: 10px 10px 0; display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; }
   .today-nav {
     width: 100%;
     display: flex;
@@ -825,7 +825,8 @@
     min-width: 13px;
     text-align: center;
   }
-  .projects-io { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-soft); }
+  .projects-page { max-width: 640px; }
+  .projects-io { display: none; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-soft); }
 
   /* ---------- Responsive ---------- */
   @media (max-width: 780px) {
@@ -847,6 +848,7 @@
     .content { padding: 16px 16px calc(72px + env(safe-area-inset-bottom, 0px)); }
     .board { grid-template-columns: 1fr; }
     .week-grid { grid-template-columns: 1fr; }
+    .projects-io { display: block; }
     .bottom-tabs {
       display: flex;
       position: fixed;
@@ -1410,6 +1412,7 @@
 
   function renderSidebarHtml() {
     var todayTotal = getTodayGroups().total;
+    var projectsActive = uiView === "projects" || uiView === "project";
     return '' +
       '<div class="sidebar" id="sidebar">' +
         '<div class="brand">' +
@@ -1424,8 +1427,11 @@
           '<button type="button" class="today-nav' + (uiView === "week" ? " active" : "") + '" data-action="view-week">' +
             ICONS.week + '<span class="today-nav-label">Неделя</span>' +
           '</button>' +
+          '<button type="button" class="today-nav' + (projectsActive ? " active" : "") + '" data-action="set-view" data-view="projects">' +
+            ICONS.projects + '<span class="today-nav-label">Проекты</span>' +
+            (state.projects.length ? '<span class="today-nav-count tabular">' + state.projects.length + '</span>' : '') +
+          '</button>' +
         '</div>' +
-        renderProjectListHtml() +
         '<div class="sidebar-footer">' + renderIoFooterHtml(true) + '</div>' +
       '</div>';
   }
@@ -1562,7 +1568,7 @@
     return '<nav class="bottom-tabs">' +
       tabs.map(function (t) {
         return '' +
-          '<button type="button" class="bottom-tab' + (activeView === t.view ? " active" : "") + '" data-action="bottom-tab" data-view="' + t.view + '">' +
+          '<button type="button" class="bottom-tab' + (activeView === t.view ? " active" : "") + '" data-action="set-view" data-view="' + t.view + '">' +
             '<span class="bottom-tab-icon">' + t.icon + (t.badge ? '<span class="bottom-tab-badge tabular">' + t.badge + '</span>' : "") + '</span>' +
             '<span>' + t.label + '</span>' +
           '</button>';
@@ -1574,7 +1580,7 @@
     var pageHtml;
     if (uiView === "today" && state.projects.length) pageHtml = renderTodayHtml();
     else if (uiView === "week" && state.projects.length) pageHtml = renderWeekHtml();
-    else if (uiView === "projects" && state.projects.length) pageHtml = renderProjectsHtml();
+    else if (uiView === "projects") pageHtml = renderProjectsHtml();
     else pageHtml = renderProjectDetailHtml();
     return pageHtml + renderBottomTabsHtml();
   }
@@ -1770,7 +1776,7 @@
         uiWeekOffset = 0;
         render();
         break;
-      case "bottom-tab":
+      case "set-view":
         uiView = el.getAttribute("data-view");
         if (uiView === "week") uiWeekOffset = 0;
         render();
