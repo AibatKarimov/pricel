@@ -324,7 +324,8 @@
   .io-btn:hover { border-color: var(--accent); color: var(--accent); }
   .io-btn-icon { flex: 0 0 auto; padding: 7px 9px; }
   .save-status { font-size: 10.5px; color: var(--ink-faint); }
-  .save-hint { font-size: 10.5px; color: var(--ink-faint); line-height: 1.4; }
+  .sync-status { font-size: 10.5px; color: var(--accent); font-weight: 600; margin-top: 2px; min-height: 13px; }
+  .save-hint { font-size: 10.5px; color: var(--ink-faint); line-height: 1.4; margin-top: 4px; }
 
   /* ---------- Lock screen ---------- */
   .lock-screen {
@@ -869,7 +870,12 @@
 
   var STORAGE_KEY = "pricel.v1";
   var LOCK_KEY = "pricel.unlocked";
+  var CODE_KEY = "pricel.code";
+  var MODIFIED_KEY = "pricel.modifiedAt";
   var PASSWORD = "8691";
+  var API_BASE = "https://pricel-api.vercel.app";
+  var syncStatusState = "idle";
+  var syncPushTimer = null;
   var uiActiveTab = "board";
   var uiAddProjectOpen = false;
   var uiView = "today";
@@ -978,8 +984,11 @@
       var entered = form.elements["password"].value;
       if (entered === PASSWORD) {
         setUnlocked(true);
+        setStoredCode(entered);
+        ensureModifiedAtSeeded();
         root.removeEventListener("submit", onLockSubmit);
         render();
+        syncPull();
       } else {
         renderLockScreen("Неверный пароль");
       }
@@ -987,6 +996,7 @@
   }
   function lockApp() {
     setUnlocked(false);
+    setStoredCode(null);
     renderLockScreen();
   }
 
@@ -1005,13 +1015,101 @@
     }
   }
   var lastSavedAt = null;
-  function save() {
+  function persistLocal() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       lastSavedAt = new Date();
     } catch (e) {
       showToast("Не удалось сохранить локально — освободите место в браузере.");
     }
+  }
+  function save() {
+    persistLocal();
+    try { localStorage.setItem(MODIFIED_KEY, nowIso()); } catch (e) {}
+    scheduleSyncPush();
+  }
+
+  /* ---------- Cloud sync ---------- */
+  function getStoredCode() {
+    try { return localStorage.getItem(CODE_KEY); } catch (e) { return null; }
+  }
+  function setStoredCode(v) {
+    try {
+      if (v) localStorage.setItem(CODE_KEY, v);
+      else localStorage.removeItem(CODE_KEY);
+    } catch (e) {}
+  }
+  function getLocalModifiedAt() {
+    try { return localStorage.getItem(MODIFIED_KEY); } catch (e) { return null; }
+  }
+  function setLocalModifiedAt(v) {
+    try { localStorage.setItem(MODIFIED_KEY, v); } catch (e) {}
+  }
+  function ensureModifiedAtSeeded() {
+    if (state.projects.length && !getLocalModifiedAt()) setLocalModifiedAt(nowIso());
+  }
+  function setSyncStatus(s) {
+    syncStatusState = s;
+    var label = s === "syncing" ? "Синхронизация…" : s === "synced" ? "Синхронизировано с облаком" : s === "offline" ? "Нет связи с сервером — сохранено локально" : "";
+    var els = document.querySelectorAll(".sync-status");
+    for (var i = 0; i < els.length; i++) els[i].textContent = label;
+  }
+  function scheduleSyncPush() {
+    if (syncPushTimer) clearTimeout(syncPushTimer);
+    syncPushTimer = setTimeout(function () { syncPushTimer = null; syncPush(); }, 1200);
+  }
+  function syncPush() {
+    var code = getStoredCode();
+    if (!code) return;
+    setSyncStatus("syncing");
+    fetch(API_BASE + "/api/state", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: code, data: JSON.stringify(state) })
+    }).then(function (res) {
+      if (!res.ok) throw new Error("push failed");
+      return res.json();
+    }).then(function (json) {
+      setLocalModifiedAt(json.updatedAt);
+      setSyncStatus("synced");
+    }).catch(function () {
+      setSyncStatus("offline");
+    });
+  }
+  function syncPull() {
+    var code = getStoredCode();
+    if (!code) return;
+    setSyncStatus("syncing");
+    fetch(API_BASE + "/api/state?code=" + encodeURIComponent(code))
+      .then(function (res) {
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error("pull failed");
+        return res.json();
+      })
+      .then(function (json) {
+        var localModifiedAt = getLocalModifiedAt();
+        if (json === null) {
+          if (state.projects.length) syncPush(); else setSyncStatus("synced");
+          return;
+        }
+        if (!localModifiedAt || json.updatedAt > localModifiedAt) {
+          try {
+            var parsed = JSON.parse(json.data);
+            if (parsed && Array.isArray(parsed.projects)) {
+              state = parsed;
+              persistLocal();
+              setLocalModifiedAt(json.updatedAt);
+              render();
+            }
+          } catch (e) {}
+          setSyncStatus("synced");
+        } else if (localModifiedAt > json.updatedAt) {
+          syncPush();
+        } else {
+          setSyncStatus("synced");
+        }
+      })
+      .catch(function () { setSyncStatus("offline"); });
   }
   function activeProject() {
     return state.projects.find(function (p) { return p.id === state.activeId; }) || null;
@@ -1272,6 +1370,7 @@
     var root = document.getElementById("app-inner");
     root.innerHTML = renderSidebarHtml() + renderMainHtml();
     bindImportInput();
+    setSyncStatus(syncStatusState);
   }
 
   function renderProjectListHtml() {
@@ -1305,7 +1404,8 @@
         (includeFileInput ? '<input type="file" id="import-input" accept="application/json,.json" class="sr-only" />' : "") +
       '</div>' +
       '<div class="save-status tabular">' + savedLabel + '</div>' +
-      '<div class="save-hint">Данные хранятся в этом браузере. Чтобы перенести их на другое устройство — экспортируйте файл и импортируйте его там.</div>';
+      '<div class="sync-status"></div>' +
+      '<div class="save-hint">Данные синхронизируются в облаке по коду доступа — открывайте на любом устройстве и вводите тот же код.</div>';
   }
 
   function renderSidebarHtml() {
@@ -1784,8 +1884,17 @@
 
   bindRootEventsOnce(document.getElementById("app-inner"));
   initCapabilities();
-  if (isUnlocked()) render();
-  else renderLockScreen();
+  if (isUnlocked()) {
+    ensureModifiedAtSeeded();
+    render();
+    syncPull();
+  } else {
+    renderLockScreen();
+  }
+
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && isUnlocked()) syncPull();
+  });
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
