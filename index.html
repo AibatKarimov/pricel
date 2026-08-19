@@ -136,7 +136,7 @@
   .brand-text h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
   .brand-text p { margin: 1px 0 0; font-size: 11.5px; color: var(--ink-faint); }
 
-  .today-nav-wrap { padding: 10px 10px 0; }
+  .today-nav-wrap { padding: 10px 10px 0; display: flex; flex-direction: column; gap: 2px; }
   .today-nav {
     width: 100%;
     display: flex;
@@ -421,6 +421,56 @@
   }
   .today-group-head:hover { color: var(--accent); }
   .today-group-count { margin-left: auto; font-family: var(--font-mono); font-weight: 600; color: var(--ink-faint); }
+
+  /* ---------- Week page ---------- */
+  .week-nav { display: flex; align-items: center; gap: 10px; margin: 10px 0 18px; }
+  .week-nav-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .week-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .week-range { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+  .week-nav-today {
+    border: none; background: var(--accent-soft); color: var(--accent-soft-ink);
+    font-size: 11.5px; font-weight: 700; padding: 4px 9px; border-radius: 100px; cursor: pointer;
+  }
+  .week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; align-items: start; }
+  .week-day {
+    min-width: 0;
+    min-height: 90px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: var(--surface);
+    padding: 8px;
+  }
+  .week-day.is-weekend { background: var(--surface-2); }
+  .week-day.is-today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .week-day-head {
+    display: flex; flex-direction: column; gap: 1px;
+    margin-bottom: 8px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .week-day-name { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-faint); }
+  .week-day.is-today .week-day-name { color: var(--accent); }
+  .week-day-num { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); font-family: var(--font-mono); }
+  .week-day-body { display: flex; flex-direction: column; gap: 10px; }
+  .week-day-group { display: flex; flex-direction: column; gap: 5px; }
+  .week-day-project {
+    align-self: flex-start;
+    background: transparent; border: none; padding: 0; margin-bottom: 2px;
+    font-size: 10px; font-weight: 700; color: var(--ink-faint);
+    cursor: pointer; text-align: left;
+  }
+  .week-day-project:hover { color: var(--accent); }
+  .week-task { display: flex; align-items: flex-start; gap: 6px; }
+  .week-task-dot { flex: none; width: 9px; height: 9px; margin-top: 3px; border-radius: 50%; border: none; padding: 0; cursor: pointer; }
+  .week-task-title { font-size: 11.5px; line-height: 1.35; color: var(--ink); word-break: break-word; }
+  .week-task.status-done .week-task-title { text-decoration: line-through; color: var(--ink-faint); }
 
   /* ---------- Board ---------- */
   .add-task-bar { margin-bottom: 18px; max-width: 640px; }
@@ -718,6 +768,7 @@
     .main-header { padding: 16px 16px 0; }
     .content { padding: 16px 16px 50px; }
     .board { grid-template-columns: 1fr; }
+    .week-grid { grid-template-columns: 1fr; }
   }
 </style>
 
@@ -738,6 +789,7 @@
   var uiActiveTab = "board";
   var uiAddProjectOpen = false;
   var uiView = "today";
+  var uiWeekOffset = 0;
   var downloadsApi = null;
 
   var STATUS_LABEL = { todo: "К выполнению", doing: "В работе", done: "Готово" };
@@ -747,9 +799,24 @@
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
   function nowIso() { return new Date().toISOString(); }
-  function todayStamp() {
-    var d = new Date();
+  function dateToStamp(d) {
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function todayStamp() { return dateToStamp(new Date()); }
+  var WEEKDAY_LABELS = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
+  function getWeekDates(offsetWeeks) {
+    var d = new Date();
+    var day = d.getDay();
+    var diffToMonday = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diffToMonday + offsetWeeks * 7);
+    d.setHours(0, 0, 0, 0);
+    var dates = [];
+    for (var i = 0; i < 7; i++) {
+      var x = new Date(d);
+      x.setDate(x.getDate() + i);
+      dates.push(x);
+    }
+    return dates;
   }
   function formatDate(iso) {
     try {
@@ -950,6 +1017,15 @@
     t.deadline = deadline || null;
     save(); render();
   }
+  function cycleTaskStatus(projectId, taskId) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p) return;
+    var t = p.tasks.find(function (x) { return x.id === taskId; });
+    if (!t) return;
+    var order = ["todo", "doing", "done"];
+    var next = order[(order.indexOf(t.status) + 1) % order.length];
+    setTaskStatus(projectId, taskId, next);
+  }
   function deleteTask(projectId, taskId) {
     var p = state.projects.find(function (x) { return x.id === projectId; });
     if (!p) return;
@@ -1072,7 +1148,8 @@
     menu: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5H13.5M2.5 8H13.5M2.5 11.5H13.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
     link: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.7 9.3L9.3 6.7M6.3 4.5L7.2 3.6a2.3 2.3 0 0 1 3.3 3.3l-1 1M9.7 11.5l-.9.9a2.3 2.3 0 0 1-3.3-3.3l1-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     lock: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="7.5" width="9" height="6" rx="1.2" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7.5V5.5a2.5 2.5 0 0 1 5 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
-    today: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 6.5H13.5" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 2V4.5M10.5 2V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="10" r="1.1" fill="currentColor"/></svg>'
+    today: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 6.5H13.5" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 2V4.5M10.5 2V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="10" r="1.1" fill="currentColor"/></svg>',
+    week: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="3" width="13" height="10.5" rx="1.3" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 7H14.5" stroke="currentColor" stroke-width="1.1"/><path d="M4.8 3V5.1M8 3V5.1M11.2 3V5.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
   };
 
   /* ---------- Today aggregation ---------- */
@@ -1141,6 +1218,9 @@
             ICONS.today + '<span class="today-nav-label">Сегодня</span>' +
             (todayTotal ? '<span class="today-nav-count tabular">' + todayTotal + '</span>' : '') +
           '</button>' +
+          '<button type="button" class="today-nav' + (uiView === "week" ? " active" : "") + '" data-action="view-week">' +
+            ICONS.week + '<span class="today-nav-label">Неделя</span>' +
+          '</button>' +
         '</div>' +
         '<div class="project-list">' + rows + '</div>' +
         '<div class="add-project">' + addForm + '</div>' +
@@ -1193,8 +1273,67 @@
     '</div>';
   }
 
+  function renderWeekTaskChip(p, t) {
+    return '' +
+      '<div class="week-task status-' + t.status + '">' +
+        '<button type="button" class="week-task-dot" data-action="cycle-task-status" data-pid="' + p.id + '" data-tid="' + t.id + '" style="background:var(' + STATUS_COLOR_VAR[t.status] + ')" aria-label="Изменить статус: ' + escapeHtml(t.title) + '"></button>' +
+        '<span class="week-task-title">' + escapeHtml(t.title) + '</span>' +
+      '</div>';
+  }
+
+  function renderWeekHtml() {
+    var mobileBar = '' +
+      '<div class="mobile-bar">' +
+        '<button type="button" data-action="toggle-sidebar" aria-label="Проекты">' + ICONS.menu + '</button>' +
+        '<span class="mobile-title">Неделя</span>' +
+      '</div>';
+    var dates = getWeekDates(uiWeekOffset);
+    var todayStr = todayStamp();
+    var rangeLabel = formatDeadline(dateToStamp(dates[0])) + " – " + formatDeadline(dateToStamp(dates[6]));
+
+    var dayBlocks = dates.map(function (d, i) {
+      var dStr = dateToStamp(d);
+      var isToday = dStr === todayStr;
+      var isWeekend = i >= 5;
+      var groups = [];
+      state.projects.forEach(function (p) {
+        var tasks = p.tasks.filter(function (t) { return t.deadline === dStr; });
+        if (tasks.length) groups.push({ project: p, tasks: tasks });
+      });
+      var groupsHtml = groups.map(function (g) {
+        return '' +
+          '<div class="week-day-group">' +
+            '<button type="button" class="week-day-project" data-action="select-project" data-id="' + g.project.id + '">' + escapeHtml(g.project.name) + '</button>' +
+            g.tasks.map(function (t) { return renderWeekTaskChip(g.project, t); }).join("") +
+          '</div>';
+      }).join("");
+      return '' +
+        '<div class="week-day' + (isToday ? " is-today" : "") + (isWeekend ? " is-weekend" : "") + '">' +
+          '<div class="week-day-head">' +
+            '<span class="week-day-name">' + WEEKDAY_LABELS[i] + '</span>' +
+            '<span class="week-day-num tabular">' + formatDeadline(dStr) + '</span>' +
+          '</div>' +
+          '<div class="week-day-body">' + groupsHtml + '</div>' +
+        '</div>';
+    }).join("");
+
+    return '<div class="main">' + mobileBar +
+      '<div class="main-header">' +
+        '<h1 class="page-title">Неделя</h1>' +
+        '<div class="week-nav">' +
+          '<button type="button" class="week-nav-btn" data-action="week-prev" aria-label="Предыдущая неделя">' + ICONS.arrowLeft + '</button>' +
+          '<span class="week-range tabular">' + rangeLabel + '</span>' +
+          '<button type="button" class="week-nav-btn" data-action="week-next" aria-label="Следующая неделя">' + ICONS.arrowRight + '</button>' +
+          (uiWeekOffset !== 0 ? '<button type="button" class="week-nav-today" data-action="week-today">Сегодня</button>' : "") +
+        '</div>' +
+      '</div>' +
+      '<div class="content"><div class="week-grid">' + dayBlocks + '</div></div>' +
+    '</div>';
+  }
+
   function renderMainHtml() {
     if (uiView === "today" && state.projects.length) return renderTodayHtml();
+    if (uiView === "week" && state.projects.length) return renderWeekHtml();
     var p = activeProject();
     var mobileBar = '' +
       '<div class="mobile-bar">' +
@@ -1382,6 +1521,24 @@
         uiView = "today";
         uiSidebarOpen = false;
         render();
+        break;
+      case "view-week":
+        uiView = "week";
+        uiWeekOffset = 0;
+        uiSidebarOpen = false;
+        render();
+        break;
+      case "week-prev":
+        uiWeekOffset -= 1; render();
+        break;
+      case "week-next":
+        uiWeekOffset += 1; render();
+        break;
+      case "week-today":
+        uiWeekOffset = 0; render();
+        break;
+      case "cycle-task-status":
+        cycleTaskStatus(el.getAttribute("data-pid"), el.getAttribute("data-tid"));
         break;
       case "delete-project":
         e.stopPropagation();
