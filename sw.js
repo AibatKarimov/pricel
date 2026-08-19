@@ -1,4 +1,4 @@
-const CACHE = "pricel-cache-v1";
+const CACHE = "pricel-cache-v2";
 
 self.addEventListener("install", function (event) {
   self.skipWaiting();
@@ -16,7 +16,7 @@ self.addEventListener("activate", function (event) {
 self.addEventListener("fetch", function (event) {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "no-store" })
       .then(function (response) {
         var copy = response.clone();
         caches.open(CACHE).then(function (cache) { cache.put(event.request, copy); });
