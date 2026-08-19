@@ -793,57 +793,72 @@
     overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
   }
 
-  .backdrop { display: none; }
+  /* ---------- Bottom tabs (mobile) ---------- */
+  .bottom-tabs { display: none; }
+  .bottom-tab {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: transparent;
+    border: none;
+    color: var(--ink-faint);
+    font-size: 10.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .bottom-tab.active { color: var(--accent); }
+  .bottom-tab-icon { position: relative; display: flex; }
+  .bottom-tab-badge {
+    position: absolute;
+    top: -5px;
+    right: -9px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 100px;
+    min-width: 13px;
+    text-align: center;
+  }
+  .projects-io { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-soft); }
 
   /* ---------- Responsive ---------- */
   @media (max-width: 780px) {
-    .sidebar {
-      position: fixed;
-      inset: 0 auto 0 0;
-      z-index: 30;
-      transform: translateX(-100%);
-      transition: transform 0.18s ease;
-      box-shadow: var(--shadow);
-    }
-    .sidebar.open { transform: translateX(0); }
-    .backdrop.open {
-      display: block;
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 12, 20, 0.4);
-      z-index: 25;
-    }
+    .sidebar { display: none; }
     .mobile-bar {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 12px 14px;
+      padding: 14px 16px;
       border-bottom: 1px solid var(--border);
       background: var(--bg);
       position: sticky;
       top: 0;
       z-index: 6;
     }
-    .mobile-bar button {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 7px 9px;
-      color: var(--ink);
-      cursor: pointer;
-      flex: none;
-    }
     .mobile-bar .mobile-title { font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .main { height: auto; min-height: 100vh; }
     .main-header { padding: 16px 16px 0; }
-    .content { padding: 16px 16px 50px; }
+    .content { padding: 16px 16px calc(72px + env(safe-area-inset-bottom, 0px)); }
     .board { grid-template-columns: 1fr; }
     .week-grid { grid-template-columns: 1fr; }
+    .bottom-tabs {
+      display: flex;
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      padding: 6px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      z-index: 20;
+    }
   }
 </style>
 
 <div id="app">
-  <div id="backdrop" class="backdrop"></div>
   <div id="app-inner"></div>
 </div>
 <div id="toasts" aria-live="polite"></div>
@@ -855,7 +870,6 @@
   var STORAGE_KEY = "pricel.v1";
   var LOCK_KEY = "pricel.unlocked";
   var PASSWORD = "8691";
-  var uiSidebarOpen = false;
   var uiActiveTab = "board";
   var uiAddProjectOpen = false;
   var uiView = "today";
@@ -945,7 +959,6 @@
     } catch (e) {}
   }
   function renderLockScreen(errorMsg) {
-    document.getElementById("backdrop").className = "backdrop";
     document.getElementById("app-inner").innerHTML = '' +
       '<div class="lock-screen">' +
         '<form class="lock-card" data-action="unlock-form">' +
@@ -1221,11 +1234,11 @@
     undo: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4.5V8.5H8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.6 8.5A5 5 0 1 0 5.5 4.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
     download: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 2V10.5M8 10.5L4.8 7.3M8 10.5L11.2 7.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
     upload: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 10.5V2M8 2L4.8 5.2M8 2L11.2 5.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
-    menu: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5H13.5M2.5 8H13.5M2.5 11.5H13.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
     link: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.7 9.3L9.3 6.7M6.3 4.5L7.2 3.6a2.3 2.3 0 0 1 3.3 3.3l-1 1M9.7 11.5l-.9.9a2.3 2.3 0 0 1-3.3-3.3l1-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     lock: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="7.5" width="9" height="6" rx="1.2" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7.5V5.5a2.5 2.5 0 0 1 5 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
     today: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 6.5H13.5" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 2V4.5M10.5 2V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="10" r="1.1" fill="currentColor"/></svg>',
-    week: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="3" width="13" height="10.5" rx="1.3" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 7H14.5" stroke="currentColor" stroke-width="1.1"/><path d="M4.8 3V5.1M8 3V5.1M11.2 3V5.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+    week: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="3" width="13" height="10.5" rx="1.3" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 7H14.5" stroke="currentColor" stroke-width="1.1"/><path d="M4.8 3V5.1M8 3V5.1M11.2 3V5.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+    projects: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4.3a1 1 0 0 1 1-1h2.8l1.1 1.4H13a1 1 0 0 1 1 1V11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>'
   };
 
   /* ---------- Today aggregation ---------- */
@@ -1258,11 +1271,10 @@
   function render() {
     var root = document.getElementById("app-inner");
     root.innerHTML = renderSidebarHtml() + renderMainHtml();
-    document.getElementById("backdrop").className = "backdrop" + (uiSidebarOpen ? " open" : "");
     bindImportInput();
   }
 
-  function renderSidebarHtml() {
+  function renderProjectListHtml() {
     var rows = state.projects.map(function (p) {
       var stats = projectStats(p);
       var active = uiView === "project" && p.id === state.activeId;
@@ -1280,11 +1292,26 @@
       ? '<form class="add-project-form" data-action="add-project-form"><input type="text" name="name" placeholder="Название проекта" autofocus /><button type="submit">' + ICONS.plus + '</button></form>'
       : '<button type="button" class="add-project-btn" data-action="open-add-project">' + ICONS.plus + ' Новый проект</button>';
 
-    var savedLabel = lastSavedAt ? "Сохранено · " + formatTime(lastSavedAt.toISOString()) : "Ещё не сохранялось";
-    var todayTotal = getTodayGroups().total;
+    return '<div class="project-list">' + rows + '</div><div class="add-project">' + addForm + '</div>';
+  }
 
+  function renderIoFooterHtml(includeFileInput) {
+    var savedLabel = lastSavedAt ? "Сохранено · " + formatTime(lastSavedAt.toISOString()) : "Ещё не сохранялось";
     return '' +
-      '<div class="sidebar' + (uiSidebarOpen ? " open" : "") + '" id="sidebar">' +
+      '<div class="io-row">' +
+        '<button type="button" class="io-btn" data-action="export">' + ICONS.download + ' Экспорт</button>' +
+        '<button type="button" class="io-btn" data-action="import">' + ICONS.upload + ' Импорт</button>' +
+        '<button type="button" class="io-btn io-btn-icon" data-action="lock-app" aria-label="Заблокировать">' + ICONS.lock + '</button>' +
+        (includeFileInput ? '<input type="file" id="import-input" accept="application/json,.json" class="sr-only" />' : "") +
+      '</div>' +
+      '<div class="save-status tabular">' + savedLabel + '</div>' +
+      '<div class="save-hint">Данные хранятся в этом браузере. Чтобы перенести их на другое устройство — экспортируйте файл и импортируйте его там.</div>';
+  }
+
+  function renderSidebarHtml() {
+    var todayTotal = getTodayGroups().total;
+    return '' +
+      '<div class="sidebar" id="sidebar">' +
         '<div class="brand">' +
           '<span class="brand-mark">' + ICONS.target + '</span>' +
           '<div class="brand-text"><h1>Прицел</h1><p>задачи по таргету</p></div>' +
@@ -1298,25 +1325,14 @@
             ICONS.week + '<span class="today-nav-label">Неделя</span>' +
           '</button>' +
         '</div>' +
-        '<div class="project-list">' + rows + '</div>' +
-        '<div class="add-project">' + addForm + '</div>' +
-        '<div class="sidebar-footer">' +
-          '<div class="io-row">' +
-            '<button type="button" class="io-btn" data-action="export">' + ICONS.download + ' Экспорт</button>' +
-            '<button type="button" class="io-btn" data-action="import">' + ICONS.upload + ' Импорт</button>' +
-            '<button type="button" class="io-btn io-btn-icon" data-action="lock-app" aria-label="Заблокировать">' + ICONS.lock + '</button>' +
-            '<input type="file" id="import-input" accept="application/json,.json" class="sr-only" />' +
-          '</div>' +
-          '<div class="save-status tabular">' + savedLabel + '</div>' +
-          '<div class="save-hint">Данные хранятся в этом браузере. Чтобы перенести их на другое устройство — экспортируйте файл и импортируйте его там.</div>' +
-        '</div>' +
+        renderProjectListHtml() +
+        '<div class="sidebar-footer">' + renderIoFooterHtml(true) + '</div>' +
       '</div>';
   }
 
   function renderTodayHtml() {
     var mobileBar = '' +
       '<div class="mobile-bar">' +
-        '<button type="button" data-action="toggle-sidebar" aria-label="Проекты">' + ICONS.menu + '</button>' +
         '<span class="mobile-title">Сегодня</span>' +
       '</div>';
     var dateLabel = new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
@@ -1365,7 +1381,6 @@
   function renderWeekHtml() {
     var mobileBar = '' +
       '<div class="mobile-bar">' +
-        '<button type="button" data-action="toggle-sidebar" aria-label="Проекты">' + ICONS.menu + '</button>' +
         '<span class="mobile-title">Неделя</span>' +
       '</div>';
     var dates = getWeekDates(uiWeekOffset);
@@ -1425,13 +1440,49 @@
     '</div>';
   }
 
+  function renderProjectsHtml() {
+    var mobileBar = '<div class="mobile-bar"><span class="mobile-title">Проекты</span></div>';
+    return '<div class="main">' + mobileBar +
+      '<div class="main-header"><h1 class="page-title">Проекты</h1></div>' +
+      '<div class="content projects-page">' +
+        renderProjectListHtml() +
+        '<div class="projects-io">' + renderIoFooterHtml(false) + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderBottomTabsHtml() {
+    var todayTotal = getTodayGroups().total;
+    var tabs = [
+      { view: "today", icon: ICONS.today, label: "Сегодня", badge: todayTotal },
+      { view: "week", icon: ICONS.week, label: "Неделя" },
+      { view: "projects", icon: ICONS.projects, label: "Проекты" }
+    ];
+    var activeView = uiView === "project" ? "projects" : uiView;
+    return '<nav class="bottom-tabs">' +
+      tabs.map(function (t) {
+        return '' +
+          '<button type="button" class="bottom-tab' + (activeView === t.view ? " active" : "") + '" data-action="bottom-tab" data-view="' + t.view + '">' +
+            '<span class="bottom-tab-icon">' + t.icon + (t.badge ? '<span class="bottom-tab-badge tabular">' + t.badge + '</span>' : "") + '</span>' +
+            '<span>' + t.label + '</span>' +
+          '</button>';
+      }).join("") +
+    '</nav>';
+  }
+
   function renderMainHtml() {
-    if (uiView === "today" && state.projects.length) return renderTodayHtml();
-    if (uiView === "week" && state.projects.length) return renderWeekHtml();
+    var pageHtml;
+    if (uiView === "today" && state.projects.length) pageHtml = renderTodayHtml();
+    else if (uiView === "week" && state.projects.length) pageHtml = renderWeekHtml();
+    else if (uiView === "projects" && state.projects.length) pageHtml = renderProjectsHtml();
+    else pageHtml = renderProjectDetailHtml();
+    return pageHtml + renderBottomTabsHtml();
+  }
+
+  function renderProjectDetailHtml() {
     var p = activeProject();
     var mobileBar = '' +
       '<div class="mobile-bar">' +
-        '<button type="button" data-action="toggle-sidebar" aria-label="Проекты">' + ICONS.menu + '</button>' +
         '<span class="mobile-title">' + (p ? escapeHtml(p.name) : "Прицел") + '</span>' +
       '</div>';
 
@@ -1608,18 +1659,20 @@
         state.activeId = el.getAttribute("data-id");
         uiActiveTab = "board";
         uiView = "project";
-        uiSidebarOpen = false;
         save(); render();
         break;
       case "view-today":
         uiView = "today";
-        uiSidebarOpen = false;
         render();
         break;
       case "view-week":
         uiView = "week";
         uiWeekOffset = 0;
-        uiSidebarOpen = false;
+        render();
+        break;
+      case "bottom-tab":
+        uiView = el.getAttribute("data-view");
+        if (uiView === "week") uiWeekOffset = 0;
         render();
         break;
       case "week-prev":
@@ -1650,11 +1703,9 @@
         break;
       case "open-add-project":
         uiAddProjectOpen = true; render();
-        var afterOpen = document.querySelector(".add-project-form input");
+        var addProjectInputs = document.querySelectorAll(".add-project-form input");
+        var afterOpen = addProjectInputs[addProjectInputs.length - 1];
         if (afterOpen) afterOpen.focus();
-        break;
-      case "toggle-sidebar":
-        uiSidebarOpen = !uiSidebarOpen; render();
         break;
       case "set-tab":
         uiActiveTab = el.getAttribute("data-tab"); render();
@@ -1686,7 +1737,6 @@
         break;
     }
   }
-  document.getElementById("backdrop").addEventListener("click", function () { uiSidebarOpen = false; render(); });
 
   function onSubmit(e) {
     var form = e.target.closest("[data-action]");
