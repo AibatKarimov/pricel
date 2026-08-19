@@ -25,6 +25,14 @@
     --idea-soft: #EFE8FD;
     --danger: #C93A52;
     --danger-soft: #FBE7EA;
+    --proj-0: hsl(30, 55%, 35%); --proj-0-soft: hsl(30, 55%, 93%);
+    --proj-1: hsl(82, 55%, 30%); --proj-1-soft: hsl(82, 55%, 93%);
+    --proj-2: hsl(115, 45%, 33%); --proj-2-soft: hsl(115, 45%, 93%);
+    --proj-3: hsl(167, 55%, 28%); --proj-3-soft: hsl(167, 55%, 93%);
+    --proj-4: hsl(200, 55%, 35%); --proj-4-soft: hsl(200, 55%, 93%);
+    --proj-5: hsl(252, 50%, 45%); --proj-5-soft: hsl(252, 50%, 94%);
+    --proj-6: hsl(305, 45%, 38%); --proj-6-soft: hsl(305, 45%, 94%);
+    --proj-7: hsl(337, 55%, 40%); --proj-7-soft: hsl(337, 55%, 94%);
     --shadow: 0 1px 2px rgba(24, 31, 51, 0.06), 0 6px 20px -8px rgba(24, 31, 51, 0.12);
     --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
@@ -54,6 +62,14 @@
       --idea-soft: #241D3D;
       --danger: #F0687D;
       --danger-soft: #331A22;
+      --proj-0: hsl(30, 70%, 72%); --proj-0-soft: hsl(30, 40%, 18%);
+      --proj-1: hsl(82, 55%, 68%); --proj-1-soft: hsl(82, 35%, 16%);
+      --proj-2: hsl(115, 45%, 65%); --proj-2-soft: hsl(115, 30%, 15%);
+      --proj-3: hsl(167, 55%, 62%); --proj-3-soft: hsl(167, 35%, 14%);
+      --proj-4: hsl(200, 65%, 68%); --proj-4-soft: hsl(200, 40%, 16%);
+      --proj-5: hsl(252, 70%, 78%); --proj-5-soft: hsl(252, 35%, 19%);
+      --proj-6: hsl(305, 55%, 72%); --proj-6-soft: hsl(305, 30%, 17%);
+      --proj-7: hsl(337, 65%, 74%); --proj-7-soft: hsl(337, 35%, 17%);
       --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 28px -10px rgba(0, 0, 0, 0.5);
     }
   }
@@ -81,6 +97,14 @@
     --idea-soft: #241D3D;
     --danger: #F0687D;
     --danger-soft: #331A22;
+    --proj-0: hsl(30, 70%, 72%); --proj-0-soft: hsl(30, 40%, 18%);
+    --proj-1: hsl(82, 55%, 68%); --proj-1-soft: hsl(82, 35%, 16%);
+    --proj-2: hsl(115, 45%, 65%); --proj-2-soft: hsl(115, 30%, 15%);
+    --proj-3: hsl(167, 55%, 62%); --proj-3-soft: hsl(167, 35%, 14%);
+    --proj-4: hsl(200, 65%, 68%); --proj-4-soft: hsl(200, 40%, 16%);
+    --proj-5: hsl(252, 70%, 78%); --proj-5-soft: hsl(252, 35%, 19%);
+    --proj-6: hsl(305, 55%, 72%); --proj-6-soft: hsl(305, 30%, 17%);
+    --proj-7: hsl(337, 65%, 74%); --proj-7-soft: hsl(337, 35%, 17%);
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 28px -10px rgba(0, 0, 0, 0.5);
   }
 
@@ -458,19 +482,54 @@
   .week-day-name { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-faint); }
   .week-day.is-today .week-day-name { color: var(--accent); }
   .week-day-num { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); font-family: var(--font-mono); }
-  .week-day-body { display: flex; flex-direction: column; gap: 10px; }
-  .week-day-group { display: flex; flex-direction: column; gap: 5px; }
-  .week-day-project {
-    align-self: flex-start;
-    background: transparent; border: none; padding: 0; margin-bottom: 2px;
-    font-size: 10px; font-weight: 700; color: var(--ink-faint);
-    cursor: pointer; text-align: left;
-  }
-  .week-day-project:hover { color: var(--accent); }
+  .week-day-body { display: flex; flex-direction: column; gap: 7px; }
   .week-task { display: flex; align-items: flex-start; gap: 6px; }
-  .week-task-dot { flex: none; width: 9px; height: 9px; margin-top: 3px; border-radius: 50%; border: none; padding: 0; cursor: pointer; }
+  .week-task-dot {
+    flex: none; width: 14px; height: 14px; margin-top: 1px;
+    border-radius: 50%; border: none; padding: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+  }
+  .week-task-dot svg { width: 9px; height: 9px; }
+  .week-task-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .task-project-badge {
+    align-self: flex-start;
+    max-width: 100%;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: none;
+    font-size: 9.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
   .week-task-title { font-size: 11.5px; line-height: 1.35; color: var(--ink); word-break: break-word; }
   .week-task.status-done .week-task-title { text-decoration: line-through; color: var(--ink-faint); }
+  .week-add-btn {
+    margin-top: 8px;
+    display: flex; align-items: center; gap: 4px;
+    background: transparent; border: 1px dashed var(--border);
+    border-radius: 6px; padding: 4px 7px;
+    font-size: 10.5px; font-weight: 600; color: var(--ink-faint);
+    cursor: pointer; width: 100%; justify-content: center;
+  }
+  .week-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .week-add-form { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .week-add-form input, .week-add-form select {
+    width: 100%;
+    padding: 5px 7px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 11px;
+  }
+  .week-add-form input:focus-visible, .week-add-form select:focus-visible { border-color: var(--accent); }
+  .week-add-row { display: flex; gap: 5px; }
+  .week-add-row button { flex: 1 1 0; padding: 5px 4px; border-radius: 6px; font-size: 10.5px; font-weight: 600; cursor: pointer; }
+  .week-add-row button[type="submit"] { border: none; background: var(--accent); color: var(--accent-ink); }
+  .week-add-row button[type="button"] { border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft); }
 
   /* ---------- Board ---------- */
   .add-task-bar { margin-bottom: 18px; max-width: 640px; }
@@ -790,6 +849,7 @@
   var uiAddProjectOpen = false;
   var uiView = "today";
   var uiWeekOffset = 0;
+  var uiWeekAddOpenDate = null;
   var downloadsApi = null;
 
   var STATUS_LABEL = { todo: "К выполнению", doing: "В работе", done: "Готово" };
@@ -840,6 +900,11 @@
     if (task.deadline < todayStamp()) return "overdue";
     if (task.deadline === todayStamp()) return "today";
     return "upcoming";
+  }
+  var PROJECT_COLOR_COUNT = 8;
+  function getProjectColorIdx(p) {
+    if (typeof p.colorIdx === "number") return p.colorIdx;
+    return state.projects.indexOf(p) % PROJECT_COLOR_COUNT;
   }
   function escapeHtml(str) {
     return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
@@ -961,7 +1026,7 @@
 
   /* ---------- Mutations ---------- */
   function createProject(name) {
-    var p = { id: uid(), name: name.trim() || "Без названия", createdAt: nowIso(), tasks: [], ideas: [], links: [] };
+    var p = { id: uid(), name: name.trim() || "Без названия", createdAt: nowIso(), colorIdx: state.projects.length % PROJECT_COLOR_COUNT, tasks: [], ideas: [], links: [] };
     state.projects.push(p);
     state.activeId = p.id;
     uiActiveTab = "board";
@@ -1274,10 +1339,15 @@
   }
 
   function renderWeekTaskChip(p, t) {
+    var colorIdx = getProjectColorIdx(p);
+    var dotContent = t.status === "done" ? ICONS.check : "";
     return '' +
       '<div class="week-task status-' + t.status + '">' +
-        '<button type="button" class="week-task-dot" data-action="cycle-task-status" data-pid="' + p.id + '" data-tid="' + t.id + '" style="background:var(' + STATUS_COLOR_VAR[t.status] + ')" aria-label="Изменить статус: ' + escapeHtml(t.title) + '"></button>' +
-        '<span class="week-task-title">' + escapeHtml(t.title) + '</span>' +
+        '<button type="button" class="week-task-dot" data-action="cycle-task-status" data-pid="' + p.id + '" data-tid="' + t.id + '" style="background:var(' + STATUS_COLOR_VAR[t.status] + ')" aria-label="Изменить статус: ' + escapeHtml(t.title) + '">' + dotContent + '</button>' +
+        '<div class="week-task-body">' +
+          '<button type="button" class="task-project-badge" data-action="select-project" data-id="' + p.id + '" style="background:var(--proj-' + colorIdx + '-soft);color:var(--proj-' + colorIdx + ')">' + escapeHtml(p.name) + '</button>' +
+          '<span class="week-task-title">' + escapeHtml(t.title) + '</span>' +
+        '</div>' +
       '</div>';
   }
 
@@ -1295,25 +1365,38 @@
       var dStr = dateToStamp(d);
       var isToday = dStr === todayStr;
       var isWeekend = i >= 5;
-      var groups = [];
+      var items = [];
       state.projects.forEach(function (p) {
-        var tasks = p.tasks.filter(function (t) { return t.deadline === dStr; });
-        if (tasks.length) groups.push({ project: p, tasks: tasks });
+        p.tasks.forEach(function (t) {
+          if (t.deadline === dStr) items.push({ project: p, task: t });
+        });
       });
-      var groupsHtml = groups.map(function (g) {
-        return '' +
-          '<div class="week-day-group">' +
-            '<button type="button" class="week-day-project" data-action="select-project" data-id="' + g.project.id + '">' + escapeHtml(g.project.name) + '</button>' +
-            g.tasks.map(function (t) { return renderWeekTaskChip(g.project, t); }).join("") +
-          '</div>';
-      }).join("");
+      items.sort(function (a, b) { return getProjectColorIdx(a.project) - getProjectColorIdx(b.project); });
+      var tasksHtml = items.map(function (it) { return renderWeekTaskChip(it.project, it.task); }).join("");
+
+      var addOpen = uiWeekAddOpenDate === dStr;
+      var addHtml = addOpen
+        ? '' +
+          '<form class="week-add-form" data-action="week-add-task-form" data-date="' + dStr + '">' +
+            '<input type="text" name="title" placeholder="Задача…" autofocus />' +
+            '<select name="projectId" aria-label="Проект">' +
+              state.projects.map(function (p) { return '<option value="' + p.id + '"' + (p.id === state.activeId ? " selected" : "") + '>' + escapeHtml(p.name) + '</option>'; }).join("") +
+            '</select>' +
+            '<div class="week-add-row">' +
+              '<button type="submit">Добавить</button>' +
+              '<button type="button" data-action="week-cancel-add">Отмена</button>' +
+            '</div>' +
+          '</form>'
+        : '<button type="button" class="week-add-btn" data-action="week-open-add" data-date="' + dStr + '">' + ICONS.plus + ' Задача</button>';
+
       return '' +
         '<div class="week-day' + (isToday ? " is-today" : "") + (isWeekend ? " is-weekend" : "") + '">' +
           '<div class="week-day-head">' +
             '<span class="week-day-name">' + WEEKDAY_LABELS[i] + '</span>' +
             '<span class="week-day-num tabular">' + formatDeadline(dStr) + '</span>' +
           '</div>' +
-          '<div class="week-day-body">' + groupsHtml + '</div>' +
+          '<div class="week-day-body">' + tasksHtml + '</div>' +
+          addHtml +
         '</div>';
     }).join("");
 
@@ -1540,6 +1623,16 @@
       case "cycle-task-status":
         cycleTaskStatus(el.getAttribute("data-pid"), el.getAttribute("data-tid"));
         break;
+      case "week-open-add":
+        uiWeekAddOpenDate = el.getAttribute("data-date");
+        render();
+        var afterWeekOpen = document.querySelector(".week-add-form input");
+        if (afterWeekOpen) afterWeekOpen.focus();
+        break;
+      case "week-cancel-add":
+        uiWeekAddOpenDate = null;
+        render();
+        break;
       case "delete-project":
         e.stopPropagation();
         deleteProject(el.getAttribute("data-id"));
@@ -1596,6 +1689,13 @@
       else render();
     } else if (action === "add-task-form") {
       addTask(form.getAttribute("data-id"), form.elements["title"].value, form.elements["deadline"].value);
+    } else if (action === "week-add-task-form") {
+      var weekTitle = form.elements["title"].value;
+      var weekProjectId = form.elements["projectId"].value;
+      var weekDate = form.getAttribute("data-date");
+      uiWeekAddOpenDate = null;
+      if (weekTitle.trim()) addTask(weekProjectId, weekTitle, weekDate);
+      else render();
     } else if (action === "add-idea-form") {
       addIdea(form.getAttribute("data-id"), form.elements["text"].value);
     } else if (action === "add-link-form") {
