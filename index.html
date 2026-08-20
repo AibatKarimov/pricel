@@ -593,6 +593,16 @@
     flex: 0 0 152px;
     color: var(--ink-soft);
   }
+  .add-task-bar select {
+    flex: 0 0 170px;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .add-task-bar select:focus-visible { border-color: var(--accent); }
 
   .board {
     display: grid;
@@ -883,6 +893,8 @@
     .board { grid-template-columns: 1fr; }
     .week-grid { grid-template-columns: 1fr; }
     .projects-io { display: block; }
+    .archive-add-bar form { flex-direction: column; }
+    .archive-add-bar select { flex: 1 1 auto; }
     .bottom-tabs {
       display: flex;
       position: fixed;
@@ -1265,6 +1277,12 @@
       p.tasks.splice(idx, 0, removed); save(); render();
     });
   }
+  function addArchivedTask(projectId, title) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p || !title.trim()) return;
+    p.tasks.unshift({ id: uid(), title: title.trim(), status: "todo", createdAt: nowIso(), completedAt: null, deadline: null, archived: true });
+    save(); render();
+  }
   function archiveTask(projectId, taskId) {
     var p = state.projects.find(function (x) { return x.id === projectId; });
     if (!p) return;
@@ -1597,13 +1615,25 @@
   function renderArchiveHtml() {
     var mobileBar = '<div class="mobile-bar"><span class="mobile-title">Архив</span></div>';
     var data = getArchivedGroups();
+    var addBar = state.projects.length
+      ? '' +
+        '<div class="add-task-bar archive-add-bar">' +
+          '<form data-action="add-archive-task-form">' +
+            '<input type="text" name="title" placeholder="Новая задача в архив…" />' +
+            '<select name="projectId" aria-label="Проект">' +
+              state.projects.map(function (p) { return '<option value="' + p.id + '"' + (p.id === state.activeId ? " selected" : "") + '>' + escapeHtml(p.name) + '</option>'; }).join("") +
+            '</select>' +
+            '<button type="submit">' + ICONS.plus + ' Добавить</button>' +
+          '</form>' +
+        '</div>'
+      : "";
     var body;
     if (!data.groups.length) {
       body = '' +
         '<div class="empty-state">' +
           '<span class="brand-mark">' + ICONS.archive + '</span>' +
           '<h2>Архив пуст</h2>' +
-          '<p>Отправляйте сюда задачи, которые пока не актуальны, — потом вернёте их с новой датой в нужный проект.</p>' +
+          '<p>Добавьте задачу здесь или отправьте существующую из проекта — потом вернёте её с новой датой, когда понадобится.</p>' +
         '</div>';
     } else {
       body = renderCategorySections(data.groups, function (g) {
@@ -1621,7 +1651,7 @@
         '<h1 class="page-title">Архив</h1>' +
         '<p class="page-subtitle">Отложенные задачи — верните их, когда станут актуальны</p>' +
       '</div>' +
-      '<div class="content">' + body + '</div>' +
+      '<div class="content">' + addBar + body + '</div>' +
     '</div>';
   }
 
@@ -2035,6 +2065,8 @@
       else render();
     } else if (action === "add-task-form") {
       addTask(form.getAttribute("data-id"), form.elements["title"].value, form.elements["deadline"].value);
+    } else if (action === "add-archive-task-form") {
+      addArchivedTask(form.elements["projectId"].value, form.elements["title"].value);
     } else if (action === "week-add-task-form") {
       var weekTitle = form.elements["title"].value;
       var weekProjectId = form.elements["projectId"].value;
