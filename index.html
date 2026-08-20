@@ -1149,13 +1149,16 @@
   }
 
   /* ---------- Mutations ---------- */
-  function createProject(name) {
-    var p = { id: uid(), name: name.trim() || "Без названия", createdAt: nowIso(), colorIdx: state.projects.length % PROJECT_COLOR_COUNT, tasks: [], ideas: [], links: [] };
+  function createProject(name, category) {
+    var p = { id: uid(), name: name.trim() || "Без названия", category: category === "personal" ? "personal" : "work", createdAt: nowIso(), colorIdx: state.projects.length % PROJECT_COLOR_COUNT, tasks: [], ideas: [], links: [] };
     state.projects.push(p);
     state.activeId = p.id;
     uiActiveTab = "board";
     uiView = "project";
     save(); render();
+  }
+  function getProjectCategory(p) {
+    return p.category === "personal" ? "personal" : "work";
   }
   function deleteProject(id) {
     var idx = state.projects.findIndex(function (p) { return p.id === id; });
@@ -1338,7 +1341,8 @@
     lock: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="7.5" width="9" height="6" rx="1.2" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7.5V5.5a2.5 2.5 0 0 1 5 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
     today: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 6.5H13.5" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 2V4.5M10.5 2V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="10" r="1.1" fill="currentColor"/></svg>',
     week: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="3" width="13" height="10.5" rx="1.3" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 7H14.5" stroke="currentColor" stroke-width="1.1"/><path d="M4.8 3V5.1M8 3V5.1M11.2 3V5.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
-    projects: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4.3a1 1 0 0 1 1-1h2.8l1.1 1.4H13a1 1 0 0 1 1 1V11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>'
+    projects: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4.3a1 1 0 0 1 1-1h2.8l1.1 1.4H13a1 1 0 0 1 1 1V11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+    personal: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="5.1" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.8 13.3c0-2.7 2.3-4.4 5.2-4.4s5.2 1.7 5.2 4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
   };
 
   /* ---------- Today aggregation ---------- */
@@ -1375,8 +1379,8 @@
     setSyncStatus(syncStatusState);
   }
 
-  function renderProjectListHtml() {
-    var rows = state.projects.map(function (p) {
+  function renderProjectListHtml(category) {
+    var rows = state.projects.filter(function (p) { return getProjectCategory(p) === category; }).map(function (p) {
       var stats = projectStats(p);
       var active = uiView === "project" && p.id === state.activeId;
       return '' +
@@ -1390,7 +1394,7 @@
     }).join("");
 
     var addForm = uiAddProjectOpen
-      ? '<form class="add-project-form" data-action="add-project-form"><input type="text" name="name" placeholder="Название проекта" autofocus /><button type="submit">' + ICONS.plus + '</button></form>'
+      ? '<form class="add-project-form" data-action="add-project-form" data-category="' + category + '"><input type="text" name="name" placeholder="Название проекта" autofocus /><button type="submit">' + ICONS.plus + '</button></form>'
       : '<button type="button" class="add-project-btn" data-action="open-add-project">' + ICONS.plus + ' Новый проект</button>';
 
     return '<div class="project-list">' + rows + '</div><div class="add-project">' + addForm + '</div>';
@@ -1412,7 +1416,12 @@
 
   function renderSidebarHtml() {
     var todayTotal = getTodayGroups().total;
-    var projectsActive = uiView === "projects" || uiView === "project";
+    var activeP = activeProject();
+    var activeCategory = activeP ? getProjectCategory(activeP) : null;
+    var projectsActive = uiView === "projects" || (uiView === "project" && activeCategory === "work");
+    var personalActive = uiView === "personal" || (uiView === "project" && activeCategory === "personal");
+    var workCount = state.projects.filter(function (p) { return getProjectCategory(p) === "work"; }).length;
+    var personalCount = state.projects.filter(function (p) { return getProjectCategory(p) === "personal"; }).length;
     return '' +
       '<div class="sidebar" id="sidebar">' +
         '<div class="brand">' +
@@ -1429,7 +1438,11 @@
           '</button>' +
           '<button type="button" class="today-nav' + (projectsActive ? " active" : "") + '" data-action="set-view" data-view="projects">' +
             ICONS.projects + '<span class="today-nav-label">Проекты</span>' +
-            (state.projects.length ? '<span class="today-nav-count tabular">' + state.projects.length + '</span>' : '') +
+            (workCount ? '<span class="today-nav-count tabular">' + workCount + '</span>' : '') +
+          '</button>' +
+          '<button type="button" class="today-nav' + (personalActive ? " active" : "") + '" data-action="set-view" data-view="personal">' +
+            ICONS.personal + '<span class="today-nav-label">Личное</span>' +
+            (personalCount ? '<span class="today-nav-count tabular">' + personalCount + '</span>' : '') +
           '</button>' +
         '</div>' +
         '<div class="sidebar-footer">' + renderIoFooterHtml(true) + '</div>' +
@@ -1546,13 +1559,14 @@
     '</div>';
   }
 
-  function renderProjectsHtml() {
-    var mobileBar = '<div class="mobile-bar"><span class="mobile-title">Проекты</span></div>';
+  function renderProjectsPageHtml(category, title) {
+    var mobileBar = '<div class="mobile-bar"><span class="mobile-title">' + title + '</span></div>';
+    var footer = category === "work" ? '<div class="projects-io">' + renderIoFooterHtml(false) + '</div>' : "";
     return '<div class="main">' + mobileBar +
-      '<div class="main-header"><h1 class="page-title">Проекты</h1></div>' +
+      '<div class="main-header"><h1 class="page-title">' + title + '</h1></div>' +
       '<div class="content projects-page">' +
-        renderProjectListHtml() +
-        '<div class="projects-io">' + renderIoFooterHtml(false) + '</div>' +
+        renderProjectListHtml(category) +
+        footer +
       '</div>' +
     '</div>';
   }
@@ -1562,9 +1576,11 @@
     var tabs = [
       { view: "today", icon: ICONS.today, label: "Сегодня", badge: todayTotal },
       { view: "week", icon: ICONS.week, label: "Неделя" },
-      { view: "projects", icon: ICONS.projects, label: "Проекты" }
+      { view: "projects", icon: ICONS.projects, label: "Проекты" },
+      { view: "personal", icon: ICONS.personal, label: "Личное" }
     ];
-    var activeView = uiView === "project" ? "projects" : uiView;
+    var activeP = activeProject();
+    var activeView = uiView === "project" ? (activeP && getProjectCategory(activeP) === "personal" ? "personal" : "projects") : uiView;
     return '<nav class="bottom-tabs">' +
       tabs.map(function (t) {
         return '' +
@@ -1580,7 +1596,8 @@
     var pageHtml;
     if (uiView === "today" && state.projects.length) pageHtml = renderTodayHtml();
     else if (uiView === "week" && state.projects.length) pageHtml = renderWeekHtml();
-    else if (uiView === "projects") pageHtml = renderProjectsHtml();
+    else if (uiView === "projects") pageHtml = renderProjectsPageHtml("work", "Проекты");
+    else if (uiView === "personal") pageHtml = renderProjectsPageHtml("personal", "Личное");
     else pageHtml = renderProjectDetailHtml();
     return pageHtml + renderBottomTabsHtml();
   }
@@ -1779,6 +1796,7 @@
       case "set-view":
         uiView = el.getAttribute("data-view");
         if (uiView === "week") uiWeekOffset = 0;
+        uiAddProjectOpen = false;
         render();
         break;
       case "week-prev":
@@ -1851,8 +1869,9 @@
     var action = form.getAttribute("data-action");
     if (action === "add-project-form") {
       var name = form.elements["name"].value;
+      var newProjectCategory = form.getAttribute("data-category");
       uiAddProjectOpen = false;
-      if (name.trim()) createProject(name);
+      if (name.trim()) createProject(name, newProjectCategory);
       else render();
     } else if (action === "add-task-form") {
       addTask(form.getAttribute("data-id"), form.elements["title"].value, form.elements["deadline"].value);
