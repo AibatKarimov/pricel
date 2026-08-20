@@ -322,7 +322,14 @@
     cursor: pointer;
   }
   .io-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .io-btn-icon { flex: 0 0 auto; padding: 7px 9px; }
+  .io-btn-icon { flex: 0 0 auto; padding: 7px 9px; position: relative; }
+  .io-btn-icon.active { border-color: var(--accent); color: var(--accent); }
+  .io-btn-badge {
+    position: absolute; top: -5px; right: -5px;
+    background: var(--accent); color: var(--accent-ink);
+    font-size: 9px; font-weight: 700; line-height: 1;
+    padding: 2px 4px; border-radius: 100px; min-width: 13px; text-align: center;
+  }
   .save-status { font-size: 10.5px; color: var(--ink-faint); }
   .sync-status { font-size: 10.5px; color: var(--accent); font-weight: 600; margin-top: 2px; min-height: 13px; }
   .save-hint { font-size: 10.5px; color: var(--ink-faint); line-height: 1.4; margin-top: 4px; }
@@ -624,6 +631,18 @@
   }
   .task-title { font-size: 13.5px; font-weight: 600; line-height: 1.4; word-break: break-word; }
   .task-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 7px; }
+  .archive-restore-row { display: flex; gap: 6px; margin-top: 8px; }
+  .archive-restore-row select, .archive-restore-row input {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 6px 7px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 11.5px;
+    color: var(--ink);
+  }
+  .archive-restore-row select:focus-visible, .archive-restore-row input:focus-visible { border-color: var(--accent); }
   .card-foot { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 8px; }
   .card-date { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-faint); margin-right: auto; }
   .deadline-input {
@@ -1139,10 +1158,11 @@
     return state.projects.find(function (p) { return p.id === state.activeId; }) || null;
   }
   function projectStats(p) {
-    var total = p.tasks.length;
-    var done = p.tasks.filter(function (t) { return t.status === "done"; }).length;
-    var doing = p.tasks.filter(function (t) { return t.status === "doing"; }).length;
-    var todo = p.tasks.filter(function (t) { return t.status === "todo"; }).length;
+    var active = p.tasks.filter(function (t) { return !t.archived; });
+    var total = active.length;
+    var done = active.filter(function (t) { return t.status === "done"; }).length;
+    var doing = active.filter(function (t) { return t.status === "doing"; }).length;
+    var todo = active.filter(function (t) { return t.status === "todo"; }).length;
     return { total: total, done: done, doing: doing, todo: todo };
   }
 
@@ -1206,7 +1226,7 @@
   function addTask(projectId, title, deadline) {
     var p = state.projects.find(function (x) { return x.id === projectId; });
     if (!p || !title.trim()) return;
-    p.tasks.unshift({ id: uid(), title: title.trim(), status: "todo", createdAt: nowIso(), completedAt: null, deadline: deadline || null });
+    p.tasks.unshift({ id: uid(), title: title.trim(), status: "todo", createdAt: nowIso(), completedAt: null, deadline: deadline || null, archived: false });
     save(); render();
   }
   function setTaskStatus(projectId, taskId, status) {
@@ -1251,6 +1271,33 @@
     showToast("Задача удалена", function () {
       p.tasks.splice(idx, 0, removed); save(); render();
     });
+  }
+  function archiveTask(projectId, taskId) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p) return;
+    var t = p.tasks.find(function (x) { return x.id === taskId; });
+    if (!t) return;
+    t.archived = true;
+    save(); render();
+    showToast("Задача отправлена в архив", function () {
+      t.archived = false; save(); render();
+    });
+  }
+  function restoreTask(fromProjectId, taskId, toProjectId, deadline) {
+    var fromP = state.projects.find(function (p) { return p.id === fromProjectId; });
+    if (!fromP) return;
+    var idx = fromP.tasks.findIndex(function (t) { return t.id === taskId; });
+    if (idx === -1) return;
+    var task = fromP.tasks[idx];
+    fromP.tasks.splice(idx, 1);
+    task.archived = false;
+    task.deadline = deadline;
+    task.status = "todo";
+    task.completedAt = null;
+    var toP = state.projects.find(function (p) { return p.id === toProjectId; }) || fromP;
+    toP.tasks.unshift(task);
+    save(); render();
+    showToast('Задача «' + task.title + '» возвращена на ' + formatDeadline(deadline));
   }
   function addIdea(projectId, text) {
     var p = state.projects.find(function (x) { return x.id === projectId; });
@@ -1364,11 +1411,13 @@
     today: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 6.5H13.5" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 2V4.5M10.5 2V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="10" r="1.1" fill="currentColor"/></svg>',
     week: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="3" width="13" height="10.5" rx="1.3" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 7H14.5" stroke="currentColor" stroke-width="1.1"/><path d="M4.8 3V5.1M8 3V5.1M11.2 3V5.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
     projects: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4.3a1 1 0 0 1 1-1h2.8l1.1 1.4H13a1 1 0 0 1 1 1V11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
-    personal: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="5.1" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.8 13.3c0-2.7 2.3-4.4 5.2-4.4s5.2 1.7 5.2 4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+    personal: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="5.1" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.8 13.3c0-2.7 2.3-4.4 5.2-4.4s5.2 1.7 5.2 4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+    archive: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="12" height="3" rx="0.8" stroke="currentColor" stroke-width="1.3"/><path d="M3 6.5V12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6.5" stroke="currentColor" stroke-width="1.3"/><path d="M6.5 9H9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
   };
 
   /* ---------- Today aggregation ---------- */
   function todayMatch(t) {
+    if (t.archived) return false;
     if (t.status === "doing") return true;
     if (t.deadline && t.status !== "done" && t.deadline <= todayStamp()) return true;
     return false;
@@ -1388,6 +1437,16 @@
         if (ra !== rb) return ra - rb;
         return (a.deadline || "") < (b.deadline || "") ? -1 : 1;
       });
+      if (tasks.length) { groups.push({ project: p, tasks: tasks }); total += tasks.length; }
+    });
+    return { groups: groups, total: total };
+  }
+
+  function getArchivedGroups() {
+    var groups = [];
+    var total = 0;
+    state.projects.forEach(function (p) {
+      var tasks = p.tasks.filter(function (t) { return t.archived; });
       if (tasks.length) { groups.push({ project: p, tasks: tasks }); total += tasks.length; }
     });
     return { groups: groups, total: total };
@@ -1437,10 +1496,12 @@
 
   function renderIoFooterHtml(includeFileInput) {
     var savedLabel = lastSavedAt ? "Сохранено · " + formatTime(lastSavedAt.toISOString()) : "Ещё не сохранялось";
+    var archivedTotal = getArchivedGroups().total;
     return '' +
       '<div class="io-row">' +
         '<button type="button" class="io-btn" data-action="export">' + ICONS.download + ' Экспорт</button>' +
         '<button type="button" class="io-btn" data-action="import">' + ICONS.upload + ' Импорт</button>' +
+        '<button type="button" class="io-btn io-btn-icon' + (uiView === "archive" ? " active" : "") + '" data-action="set-view" data-view="archive" aria-label="Архив">' + ICONS.archive + (archivedTotal ? '<span class="io-btn-badge tabular">' + archivedTotal + '</span>' : "") + '</button>' +
         '<button type="button" class="io-btn io-btn-icon" data-action="lock-app" aria-label="Заблокировать">' + ICONS.lock + '</button>' +
         (includeFileInput ? '<input type="file" id="import-input" accept="application/json,.json" class="sr-only" />' : "") +
       '</div>' +
@@ -1519,6 +1580,55 @@
     '</div>';
   }
 
+  function renderArchivedTaskCard(p, t) {
+    var projectOptions = state.projects.map(function (proj) {
+      return '<option value="' + proj.id + '"' + (proj.id === p.id ? " selected" : "") + '>' + escapeHtml(proj.name) + '</option>';
+    }).join("");
+    return '' +
+      '<div class="task-card">' +
+        '<div class="task-title">' + escapeHtml(t.title) + '</div>' +
+        '<div class="archive-restore-row">' +
+          '<select class="archive-project-select" aria-label="Проект">' + projectOptions + '</select>' +
+          '<input type="date" class="archive-date-input" aria-label="Новая дата" />' +
+        '</div>' +
+        '<div class="card-foot">' +
+          '<button type="button" class="icon-btn primary" data-action="restore-task" data-pid="' + p.id + '" data-tid="' + t.id + '">' + ICONS.undo + ' Вернуть</button>' +
+          '<button type="button" class="icon-btn danger icon-only" data-action="delete-task" data-pid="' + p.id + '" data-tid="' + t.id + '" aria-label="Удалить окончательно">' + ICONS.trash + '</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderArchiveHtml() {
+    var mobileBar = '<div class="mobile-bar"><span class="mobile-title">Архив</span></div>';
+    var data = getArchivedGroups();
+    var body;
+    if (!data.groups.length) {
+      body = '' +
+        '<div class="empty-state">' +
+          '<span class="brand-mark">' + ICONS.archive + '</span>' +
+          '<h2>Архив пуст</h2>' +
+          '<p>Отправляйте сюда задачи, которые пока не актуальны, — потом вернёте их с новой датой в нужный проект.</p>' +
+        '</div>';
+    } else {
+      body = renderCategorySections(data.groups, function (g) {
+        return '' +
+          '<div class="today-group">' +
+            '<button type="button" class="today-group-head" data-action="select-project" data-id="' + g.project.id + '">' +
+              escapeHtml(g.project.name) + '<span class="today-group-count tabular">' + g.tasks.length + '</span>' +
+            '</button>' +
+            '<div class="card-list">' + g.tasks.map(function (t) { return renderArchivedTaskCard(g.project, t); }).join("") + '</div>' +
+          '</div>';
+      });
+    }
+    return '<div class="main">' + mobileBar +
+      '<div class="main-header">' +
+        '<h1 class="page-title">Архив</h1>' +
+        '<p class="page-subtitle">Отложенные задачи — верните их, когда станут актуальны</p>' +
+      '</div>' +
+      '<div class="content">' + body + '</div>' +
+    '</div>';
+  }
+
   function renderWeekTaskChip(p, t) {
     var dotContent = t.status === "done" ? ICONS.check : "";
     return '' +
@@ -1544,7 +1654,7 @@
       var isWeekend = i >= 5;
       var groups = [];
       state.projects.forEach(function (p) {
-        var tasks = p.tasks.filter(function (t) { return t.deadline === dStr; });
+        var tasks = p.tasks.filter(function (t) { return t.deadline === dStr && !t.archived; });
         if (tasks.length) groups.push({ project: p, tasks: tasks });
       });
       var tasksHtml = renderCategorySections(groups, function (g) {
@@ -1635,6 +1745,7 @@
     else if (uiView === "week" && state.projects.length) pageHtml = renderWeekHtml();
     else if (uiView === "projects") pageHtml = renderProjectsPageHtml("work", "Проекты");
     else if (uiView === "personal") pageHtml = renderProjectsPageHtml("personal", "Личное");
+    else if (uiView === "archive") pageHtml = renderArchiveHtml();
     else pageHtml = renderProjectDetailHtml();
     return pageHtml + renderBottomTabsHtml();
   }
@@ -1702,7 +1813,7 @@
       '</div>';
 
     var columns = ["todo", "doing", "done"].map(function (status) {
-      var tasks = p.tasks.filter(function (t) { return t.status === status; });
+      var tasks = p.tasks.filter(function (t) { return t.status === status && !t.archived; });
       var cards = tasks.map(function (t) { return renderTaskCard(p, t); }).join("");
       if (!cards) cards = '<div class="empty-col">Пусто</div>';
       return '' +
@@ -1738,6 +1849,7 @@
         '</div>' +
         '<div class="card-foot">' +
           actions +
+          '<button type="button" class="icon-btn icon-only" data-action="archive-task" data-pid="' + p.id + '" data-tid="' + t.id + '" aria-label="В архив">' + ICONS.archive + '</button>' +
           '<button type="button" class="icon-btn danger icon-only" data-action="delete-task" data-pid="' + p.id + '" data-tid="' + t.id + '" aria-label="Удалить задачу">' + ICONS.trash + '</button>' +
         '</div>' +
       '</div>';
@@ -1876,6 +1988,19 @@
         break;
       case "delete-task":
         deleteTask(el.getAttribute("data-pid"), el.getAttribute("data-tid"));
+        break;
+      case "archive-task":
+        archiveTask(el.getAttribute("data-pid"), el.getAttribute("data-tid"));
+        break;
+      case "restore-task":
+        var restoreCard = el.closest(".task-card");
+        var projSelect = restoreCard ? restoreCard.querySelector(".archive-project-select") : null;
+        var dateInput = restoreCard ? restoreCard.querySelector(".archive-date-input") : null;
+        var fromPid = el.getAttribute("data-pid");
+        var toPid = projSelect ? projSelect.value : fromPid;
+        var newDate = dateInput ? dateInput.value : "";
+        if (!newDate) { showToast("Сначала укажите дату"); break; }
+        restoreTask(fromPid, el.getAttribute("data-tid"), toPid, newDate);
         break;
       case "idea-to-task":
         ideaToTask(el.getAttribute("data-pid"), el.getAttribute("data-iid"));
