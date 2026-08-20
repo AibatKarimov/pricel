@@ -486,6 +486,7 @@
   }
   .week-day.is-weekend { background: var(--surface-2); }
   .week-day.is-today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .week-day.drag-over { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent) inset; }
   .week-day-head {
     display: flex; flex-direction: column; gap: 1px;
     margin-bottom: 8px; padding-bottom: 6px;
@@ -504,7 +505,8 @@
     margin-bottom: 8px;
   }
   .week-day-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-  .week-task { display: flex; align-items: flex-start; gap: 6px; }
+  .week-task { display: flex; align-items: flex-start; gap: 6px; cursor: grab; border-radius: 5px; }
+  .week-task.dragging { opacity: 0.4; }
   .week-task-dot {
     flex: none; width: 14px; height: 14px; margin-top: 1px;
     border-radius: 50%; border: none; padding: 0; cursor: pointer;
@@ -526,8 +528,21 @@
     text-overflow: ellipsis;
     cursor: pointer;
   }
-  .week-task-title { flex: 1 1 auto; font-size: 11.5px; line-height: 1.35; color: var(--ink); word-break: break-word; }
+  .week-task-title { flex: 1 1 auto; font-size: 11.5px; line-height: 1.35; color: var(--ink); word-break: break-word; cursor: text; border-radius: 3px; }
+  .week-task-title:hover { background: var(--surface-2); }
   .week-task.status-done .week-task-title { text-decoration: line-through; color: var(--ink-faint); }
+  .week-task-title-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 11.5px;
+    line-height: 1.35;
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 0 3px;
+  }
   .week-task-del {
     flex: none;
     display: flex;
@@ -632,7 +647,22 @@
     padding: 10px 11px 9px;
     box-shadow: var(--shadow);
   }
-  .task-title { font-size: 13.5px; font-weight: 600; line-height: 1.4; word-break: break-word; }
+  .task-title { font-size: 13.5px; font-weight: 600; line-height: 1.4; word-break: break-word; cursor: text; border-radius: 4px; }
+  .task-title:hover { background: var(--surface-2); margin: -2px -4px; padding: 2px 4px; }
+  .task-title-input {
+    display: block;
+    width: 100%;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 5px;
+    padding: 3px 5px;
+    margin: -3px -6px 0;
+  }
   .task-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 7px; }
   .archive-restore-row { display: flex; gap: 6px; margin-top: 8px; }
   .archive-restore-row select, .archive-restore-row input {
@@ -929,6 +959,9 @@
   var uiView = "today";
   var uiWeekOffset = 0;
   var uiWeekAddOpenDate = null;
+  var uiEditingTaskId = null;
+  var suppressEditBlur = false;
+  var dragTaskData = null;
   var downloadsApi = null;
 
   var STATUS_LABEL = { todo: "К выполнению", doing: "В работе", done: "Готово" };
@@ -1255,6 +1288,34 @@
     if (!t) return;
     t.deadline = deadline || null;
     save(); render();
+  }
+  function commitEditTask(projectId, taskId, newTitle) {
+    uiEditingTaskId = null;
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    var t = p && p.tasks.find(function (x) { return x.id === taskId; });
+    var changed = false;
+    if (t) {
+      var clean = newTitle.trim();
+      if (clean && clean !== t.title) { t.title = clean; changed = true; }
+    }
+    if (changed) save();
+    render();
+  }
+  function cancelEditTask() {
+    uiEditingTaskId = null;
+    render();
+  }
+  function moveTaskToDate(projectId, taskId, newDate) {
+    var p = state.projects.find(function (x) { return x.id === projectId; });
+    if (!p) return;
+    var t = p.tasks.find(function (x) { return x.id === taskId; });
+    if (!t || !newDate || t.deadline === newDate) return;
+    var prevDeadline = t.deadline;
+    t.deadline = newDate;
+    save(); render();
+    showToast("Задача перенесена на " + formatDeadline(newDate), function () {
+      t.deadline = prevDeadline; save(); render();
+    });
   }
   function cycleTaskStatus(projectId, taskId) {
     var p = state.projects.find(function (x) { return x.id === projectId; });
@@ -1598,9 +1659,12 @@
     var projectOptions = state.projects.map(function (proj) {
       return '<option value="' + proj.id + '"' + (proj.id === p.id ? " selected" : "") + '>' + escapeHtml(proj.name) + '</option>';
     }).join("");
+    var titleHtml = uiEditingTaskId === t.id
+      ? '<input type="text" class="task-title-input" data-action="commit-edit-task" data-pid="' + p.id + '" data-tid="' + t.id + '" value="' + escapeHtml(t.title) + '" />'
+      : '<div class="task-title" data-action="start-edit-task" data-pid="' + p.id + '" data-tid="' + t.id + '" title="Нажмите, чтобы изменить">' + escapeHtml(t.title) + '</div>';
     return '' +
       '<div class="task-card">' +
-        '<div class="task-title">' + escapeHtml(t.title) + '</div>' +
+        titleHtml +
         '<div class="archive-restore-row">' +
           '<select class="archive-project-select" aria-label="Проект">' + projectOptions + '</select>' +
           '<input type="date" class="archive-date-input" aria-label="Новая дата" />' +
@@ -1657,10 +1721,14 @@
 
   function renderWeekTaskChip(p, t) {
     var dotContent = t.status === "done" ? ICONS.check : "";
+    var isEditing = uiEditingTaskId === t.id;
+    var titleHtml = isEditing
+      ? '<input type="text" class="week-task-title-input" data-action="commit-edit-task" data-pid="' + p.id + '" data-tid="' + t.id + '" value="' + escapeHtml(t.title) + '" />'
+      : '<span class="week-task-title" data-action="start-edit-task" data-pid="' + p.id + '" data-tid="' + t.id + '" title="Нажмите, чтобы изменить">' + escapeHtml(t.title) + '</span>';
     return '' +
-      '<div class="week-task status-' + t.status + '">' +
+      '<div class="week-task status-' + t.status + '" draggable="' + (isEditing ? "false" : "true") + '" data-pid="' + p.id + '" data-tid="' + t.id + '">' +
         '<button type="button" class="week-task-dot" data-action="cycle-task-status" data-pid="' + p.id + '" data-tid="' + t.id + '" style="background:var(' + STATUS_COLOR_VAR[t.status] + ')" aria-label="Изменить статус: ' + escapeHtml(t.title) + '">' + dotContent + '</button>' +
-        '<span class="week-task-title">' + escapeHtml(t.title) + '</span>' +
+        titleHtml +
         '<button type="button" class="week-task-del" data-action="delete-task" data-pid="' + p.id + '" data-tid="' + t.id + '" aria-label="Удалить задачу">' + ICONS.trash + '</button>' +
       '</div>';
   }
@@ -1708,7 +1776,7 @@
         : '<button type="button" class="week-add-btn" data-action="week-open-add" data-date="' + dStr + '">' + ICONS.plus + ' Задача</button>';
 
       return '' +
-        '<div class="week-day' + (isToday ? " is-today" : "") + (isWeekend ? " is-weekend" : "") + '">' +
+        '<div class="week-day' + (isToday ? " is-today" : "") + (isWeekend ? " is-weekend" : "") + '" data-date="' + dStr + '">' +
           '<div class="week-day-head">' +
             '<span class="week-day-name">' + WEEKDAY_LABELS[i] + '</span>' +
             '<span class="week-day-num tabular">' + formatDeadline(dStr) + '</span>' +
@@ -1868,9 +1936,12 @@
     var dateText = formatDate(t.createdAt);
     if (t.status === "done" && t.completedAt) dateText += " → " + formatDate(t.completedAt);
     var dstate = deadlineState(t);
+    var titleHtml = uiEditingTaskId === t.id
+      ? '<input type="text" class="task-title-input" data-action="commit-edit-task" data-pid="' + p.id + '" data-tid="' + t.id + '" value="' + escapeHtml(t.title) + '" />'
+      : '<div class="task-title" data-action="start-edit-task" data-pid="' + p.id + '" data-tid="' + t.id + '" title="Нажмите, чтобы изменить">' + escapeHtml(t.title) + '</div>';
     return '' +
       '<div class="task-card">' +
-        '<div class="task-title">' + escapeHtml(t.title) + '</div>' +
+        titleHtml +
         '<div class="task-meta">' +
           '<span class="card-date tabular">' + dateText + '</span>' +
           '<input type="date" class="deadline-input state-' + dstate + (t.deadline ? ' has-value' : '') + '" value="' + (t.deadline || "") + '" data-action="set-deadline" data-pid="' + p.id + '" data-tid="' + t.id + '" aria-label="Дедлайн" />' +
@@ -1939,6 +2010,64 @@
     root.addEventListener("click", onClick);
     root.addEventListener("submit", onSubmit);
     root.addEventListener("change", onChange);
+    root.addEventListener("focusout", onFocusOut);
+    root.addEventListener("keydown", onEditKeyDown);
+    root.addEventListener("dragstart", onDragStart);
+    root.addEventListener("dragover", onDragOver);
+    root.addEventListener("dragleave", onDragLeave);
+    root.addEventListener("drop", onDrop);
+    root.addEventListener("dragend", onDragEnd);
+  }
+  function onFocusOut(e) {
+    var el = e.target.closest("[data-action='commit-edit-task']");
+    if (!el) return;
+    if (suppressEditBlur) { suppressEditBlur = false; return; }
+    commitEditTask(el.getAttribute("data-pid"), el.getAttribute("data-tid"), el.value);
+  }
+  function onEditKeyDown(e) {
+    var el = e.target.closest("[data-action='commit-edit-task']");
+    if (!el) return;
+    if (e.key === "Enter") { e.preventDefault(); el.blur(); }
+    else if (e.key === "Escape") { e.preventDefault(); suppressEditBlur = true; cancelEditTask(); }
+  }
+  function onDragStart(e) {
+    var el = e.target.closest(".week-task");
+    if (!el || el.getAttribute("draggable") !== "true") return;
+    dragTaskData = { pid: el.getAttribute("data-pid"), tid: el.getAttribute("data-tid") };
+    try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragTaskData.tid); } catch (err) {}
+    el.classList.add("dragging");
+  }
+  function onDragOver(e) {
+    if (!dragTaskData) return;
+    var day = e.target.closest(".week-day");
+    if (!day) return;
+    e.preventDefault();
+    try { e.dataTransfer.dropEffect = "move"; } catch (err) {}
+    if (!day.classList.contains("drag-over")) {
+      var prev = document.querySelector(".week-day.drag-over");
+      if (prev && prev !== day) prev.classList.remove("drag-over");
+      day.classList.add("drag-over");
+    }
+  }
+  function onDragLeave(e) {
+    var day = e.target.closest(".week-day");
+    if (!day || day.contains(e.relatedTarget)) return;
+    day.classList.remove("drag-over");
+  }
+  function onDrop(e) {
+    var day = e.target.closest(".week-day");
+    if (!day || !dragTaskData) return;
+    e.preventDefault();
+    day.classList.remove("drag-over");
+    moveTaskToDate(dragTaskData.pid, dragTaskData.tid, day.getAttribute("data-date"));
+    dragTaskData = null;
+  }
+  function onDragEnd() {
+    var draggingEl = document.querySelector(".week-task.dragging");
+    if (draggingEl) draggingEl.classList.remove("dragging");
+    var overEl = document.querySelector(".week-day.drag-over");
+    if (overEl) overEl.classList.remove("drag-over");
+    dragTaskData = null;
   }
   function bindImportInput() {
     var importInput = document.getElementById("import-input");
@@ -1987,6 +2116,12 @@
         break;
       case "cycle-task-status":
         cycleTaskStatus(el.getAttribute("data-pid"), el.getAttribute("data-tid"));
+        break;
+      case "start-edit-task":
+        uiEditingTaskId = el.getAttribute("data-tid");
+        render();
+        var editInput = document.querySelector('[data-action="commit-edit-task"]');
+        if (editInput) { editInput.focus(); editInput.select(); }
         break;
       case "week-open-add":
         uiWeekAddOpenDate = el.getAttribute("data-date");
