@@ -526,8 +526,21 @@
     text-overflow: ellipsis;
     cursor: pointer;
   }
-  .week-task-title { font-size: 11.5px; line-height: 1.35; color: var(--ink); word-break: break-word; }
+  .week-task-title { flex: 1 1 auto; font-size: 11.5px; line-height: 1.35; color: var(--ink); word-break: break-word; }
   .week-task.status-done .week-task-title { text-decoration: line-through; color: var(--ink-faint); }
+  .week-task-del {
+    flex: none;
+    display: flex;
+    align-items: center;
+    margin-top: 2px;
+    background: transparent;
+    border: none;
+    padding: 1px;
+    color: var(--ink-faint);
+    cursor: pointer;
+  }
+  .week-task-del:hover { color: var(--danger); }
+  .week-task-del svg { width: 10px; height: 10px; display: block; }
   .week-add-btn {
     margin-top: 8px;
     display: flex; align-items: center; gap: 4px;
@@ -1512,6 +1525,7 @@
       '<div class="week-task status-' + t.status + '">' +
         '<button type="button" class="week-task-dot" data-action="cycle-task-status" data-pid="' + p.id + '" data-tid="' + t.id + '" style="background:var(' + STATUS_COLOR_VAR[t.status] + ')" aria-label="Изменить статус: ' + escapeHtml(t.title) + '">' + dotContent + '</button>' +
         '<span class="week-task-title">' + escapeHtml(t.title) + '</span>' +
+        '<button type="button" class="week-task-del" data-action="delete-task" data-pid="' + p.id + '" data-tid="' + t.id + '" aria-label="Удалить задачу">' + ICONS.trash + '</button>' +
       '</div>';
   }
 
