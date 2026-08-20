@@ -322,14 +322,7 @@
     cursor: pointer;
   }
   .io-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .io-btn-icon { flex: 0 0 auto; padding: 7px 9px; position: relative; }
-  .io-btn-icon.active { border-color: var(--accent); color: var(--accent); }
-  .io-btn-badge {
-    position: absolute; top: -5px; right: -5px;
-    background: var(--accent); color: var(--accent-ink);
-    font-size: 9px; font-weight: 700; line-height: 1;
-    padding: 2px 4px; border-radius: 100px; min-width: 13px; text-align: center;
-  }
+  .io-btn-icon { flex: 0 0 auto; padding: 7px 9px; }
   .save-status { font-size: 10.5px; color: var(--ink-faint); }
   .sync-status { font-size: 10.5px; color: var(--accent); font-weight: 600; margin-top: 2px; min-height: 13px; }
   .save-hint { font-size: 10.5px; color: var(--ink-faint); line-height: 1.4; margin-top: 4px; }
@@ -1496,12 +1489,10 @@
 
   function renderIoFooterHtml(includeFileInput) {
     var savedLabel = lastSavedAt ? "Сохранено · " + formatTime(lastSavedAt.toISOString()) : "Ещё не сохранялось";
-    var archivedTotal = getArchivedGroups().total;
     return '' +
       '<div class="io-row">' +
         '<button type="button" class="io-btn" data-action="export">' + ICONS.download + ' Экспорт</button>' +
         '<button type="button" class="io-btn" data-action="import">' + ICONS.upload + ' Импорт</button>' +
-        '<button type="button" class="io-btn io-btn-icon' + (uiView === "archive" ? " active" : "") + '" data-action="set-view" data-view="archive" aria-label="Архив">' + ICONS.archive + (archivedTotal ? '<span class="io-btn-badge tabular">' + archivedTotal + '</span>' : "") + '</button>' +
         '<button type="button" class="io-btn io-btn-icon" data-action="lock-app" aria-label="Заблокировать">' + ICONS.lock + '</button>' +
         (includeFileInput ? '<input type="file" id="import-input" accept="application/json,.json" class="sr-only" />' : "") +
       '</div>' +
@@ -1512,6 +1503,7 @@
 
   function renderSidebarHtml() {
     var todayTotal = getTodayGroups().total;
+    var archivedTotal = getArchivedGroups().total;
     var activeP = activeProject();
     var activeCategory = activeP ? getProjectCategory(activeP) : null;
     var projectsActive = uiView === "projects" || (uiView === "project" && activeCategory === "work");
@@ -1531,6 +1523,10 @@
           '</button>' +
           '<button type="button" class="today-nav' + (uiView === "week" ? " active" : "") + '" data-action="view-week">' +
             ICONS.week + '<span class="today-nav-label">Неделя</span>' +
+          '</button>' +
+          '<button type="button" class="today-nav' + (uiView === "archive" ? " active" : "") + '" data-action="set-view" data-view="archive">' +
+            ICONS.archive + '<span class="today-nav-label">Архив</span>' +
+            (archivedTotal ? '<span class="today-nav-count tabular">' + archivedTotal + '</span>' : '') +
           '</button>' +
           '<button type="button" class="today-nav' + (projectsActive ? " active" : "") + '" data-action="set-view" data-view="projects">' +
             ICONS.projects + '<span class="today-nav-label">Проекты</span>' +
@@ -1720,9 +1716,11 @@
 
   function renderBottomTabsHtml() {
     var todayTotal = getTodayGroups().total;
+    var archivedTotal = getArchivedGroups().total;
     var tabs = [
       { view: "today", icon: ICONS.today, label: "Сегодня", badge: todayTotal },
       { view: "week", icon: ICONS.week, label: "Неделя" },
+      { view: "archive", icon: ICONS.archive, label: "Архив", badge: archivedTotal },
       { view: "projects", icon: ICONS.projects, label: "Проекты" },
       { view: "personal", icon: ICONS.personal, label: "Личное" }
     ];
