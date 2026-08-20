@@ -494,7 +494,8 @@
   .week-day-name { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-faint); }
   .week-day.is-today .week-day-name { color: var(--accent); }
   .week-day-num { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); font-family: var(--font-mono); }
-  .week-day-body { display: flex; flex-direction: column; gap: 7px; }
+  .week-day-body { display: flex; flex-direction: column; gap: 12px; }
+  .week-day-group { display: flex; flex-direction: column; gap: 6px; }
   .week-task { display: flex; align-items: flex-start; gap: 6px; }
   .week-task-dot {
     flex: none; width: 14px; height: 14px; margin-top: 1px;
@@ -503,11 +504,11 @@
     color: #fff;
   }
   .week-task-dot svg { width: 9px; height: 9px; }
-  .week-task-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .task-project-badge {
     align-self: flex-start;
     max-width: 100%;
-    padding: 1px 6px;
+    margin-bottom: 1px;
+    padding: 2px 7px;
     border-radius: 4px;
     border: none;
     font-size: 9.5px;
@@ -1485,15 +1486,11 @@
   }
 
   function renderWeekTaskChip(p, t) {
-    var colorIdx = getProjectColorIdx(p);
     var dotContent = t.status === "done" ? ICONS.check : "";
     return '' +
       '<div class="week-task status-' + t.status + '">' +
         '<button type="button" class="week-task-dot" data-action="cycle-task-status" data-pid="' + p.id + '" data-tid="' + t.id + '" style="background:var(' + STATUS_COLOR_VAR[t.status] + ')" aria-label="Изменить статус: ' + escapeHtml(t.title) + '">' + dotContent + '</button>' +
-        '<div class="week-task-body">' +
-          '<button type="button" class="task-project-badge" data-action="select-project" data-id="' + p.id + '" style="background:var(--proj-' + colorIdx + '-soft);color:var(--proj-' + colorIdx + ')">' + escapeHtml(p.name) + '</button>' +
-          '<span class="week-task-title">' + escapeHtml(t.title) + '</span>' +
-        '</div>' +
+        '<span class="week-task-title">' + escapeHtml(t.title) + '</span>' +
       '</div>';
   }
 
@@ -1510,14 +1507,19 @@
       var dStr = dateToStamp(d);
       var isToday = dStr === todayStr;
       var isWeekend = i >= 5;
-      var items = [];
+      var groups = [];
       state.projects.forEach(function (p) {
-        p.tasks.forEach(function (t) {
-          if (t.deadline === dStr) items.push({ project: p, task: t });
-        });
+        var tasks = p.tasks.filter(function (t) { return t.deadline === dStr; });
+        if (tasks.length) groups.push({ project: p, tasks: tasks });
       });
-      items.sort(function (a, b) { return getProjectColorIdx(a.project) - getProjectColorIdx(b.project); });
-      var tasksHtml = items.map(function (it) { return renderWeekTaskChip(it.project, it.task); }).join("");
+      var tasksHtml = groups.map(function (g) {
+        var colorIdx = getProjectColorIdx(g.project);
+        return '' +
+          '<div class="week-day-group">' +
+            '<button type="button" class="week-day-project task-project-badge" data-action="select-project" data-id="' + g.project.id + '" style="background:var(--proj-' + colorIdx + '-soft);color:var(--proj-' + colorIdx + ')">' + escapeHtml(g.project.name) + '</button>' +
+            g.tasks.map(function (t) { return renderWeekTaskChip(g.project, t); }).join("") +
+          '</div>';
+      }).join("");
 
       var addOpen = uiWeekAddOpenDate === dStr;
       var addHtml = addOpen
