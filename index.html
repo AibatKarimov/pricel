@@ -782,10 +782,35 @@
   }
   .finance-table td { padding: 9px 8px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
   .finance-table tr:last-child td { border-bottom: none; }
-  .fin-project-cell { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
-  .fin-project-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .fin-project-cell { display: flex; align-items: flex-start; gap: 7px; white-space: nowrap; }
+  .fin-project-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-top: 5px; }
+  .fin-project-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .fin-project-name { background: transparent; border: none; padding: 0; font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; text-align: left; }
   .fin-project-name:hover { color: var(--accent); }
+  .fin-project-note {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    cursor: text;
+    border-radius: 4px;
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 1px 3px;
+    margin: 0 -3px;
+  }
+  .fin-project-note:hover { background: var(--surface-2); }
+  .fin-project-note-empty { opacity: 0.65; }
+  .fin-project-note-input {
+    font-size: 10.5px;
+    font-family: inherit;
+    padding: 2px 5px;
+    border-radius: 4px;
+    border: 1px solid var(--accent);
+    background: var(--surface);
+    color: var(--ink);
+    width: 170px;
+  }
   .fin-amount { cursor: text; border-radius: 4px; padding: 2px 4px; margin: -2px -4px; font-variant-numeric: tabular-nums; }
   .fin-amount:hover { background: var(--surface-2); }
   .fin-amount-empty { color: var(--ink-faint); }
@@ -1399,7 +1424,7 @@
 
   /* ---------- Mutations ---------- */
   function createProject(name, category) {
-    var p = { id: uid(), name: name.trim() || "Без названия", category: category === "personal" ? "personal" : "work", createdAt: nowIso(), colorIdx: state.projects.length % PROJECT_COLOR_COUNT, tasks: [], ideas: [], links: [] };
+    var p = { id: uid(), name: name.trim() || "Без названия", category: category === "personal" ? "personal" : "work", createdAt: nowIso(), colorIdx: state.projects.length % PROJECT_COLOR_COUNT, note: "", tasks: [], ideas: [], links: [] };
     state.projects.push(p);
     state.activeId = p.id;
     uiActiveTab = "board";
@@ -1428,6 +1453,12 @@
     if (!p) return;
     var clean = name.trim();
     if (clean) p.name = clean;
+    save(); render();
+  }
+  function setProjectNote(id, note) {
+    var p = state.projects.find(function (x) { return x.id === id; });
+    if (!p) return;
+    p.note = String(note == null ? "" : note).trim();
     save(); render();
   }
   function addTask(projectId, title, deadline) {
@@ -1579,6 +1610,7 @@
   }
   function commitEditFinance(pid, field, rawValue) {
     uiEditingFinanceField = null;
+    if (field === "note") { setProjectNote(pid, rawValue); return; }
     var trimmed = String(rawValue == null ? "" : rawValue).trim();
     var num;
     if (trimmed === "") {
@@ -2066,6 +2098,13 @@
         var editingHon = uiEditingFinanceField && uiEditingFinanceField.pid === p.id && uiEditingFinanceField.field === "honorarium";
         var editingPaid = uiEditingFinanceField && uiEditingFinanceField.pid === p.id && uiEditingFinanceField.field === "honorariumPaid";
         var editingBudget = uiEditingFinanceField && uiEditingFinanceField.pid === p.id && uiEditingFinanceField.field === "budget";
+        var editingNote = uiEditingFinanceField && uiEditingFinanceField.pid === p.id && uiEditingFinanceField.field === "note";
+
+        var noteCell = editingNote
+          ? '<input type="text" class="fin-project-note-input" data-action="commit-edit-finance" data-field="note" data-pid="' + p.id + '" value="' + escapeHtml(p.note || "") + '" placeholder="Например: месячное ведение" />'
+          : (p.note
+              ? '<span class="fin-project-note" data-action="start-edit-finance" data-field="note" data-pid="' + p.id + '" title="Нажмите, чтобы изменить: ' + escapeHtml(p.note) + '">' + escapeHtml(p.note) + '</span>'
+              : '<span class="fin-project-note fin-project-note-empty" data-action="start-edit-finance" data-field="note" data-pid="' + p.id + '" title="Нажмите, чтобы добавить заметку">+ заметка</span>');
 
         var honCell = editingHon
           ? '<input type="number" min="0" step="1" class="fin-amount-input" data-action="commit-edit-finance" data-field="honorarium" data-pid="' + p.id + '" value="' + entry.honorarium + '" />'
@@ -2095,7 +2134,7 @@
 
         return '' +
           '<tr>' +
-            '<td><div class="fin-project-cell"><span class="fin-project-dot" style="background:var(--proj-' + colorIdx + ')"></span><button type="button" class="fin-project-name" data-action="select-project" data-id="' + p.id + '">' + escapeHtml(p.name) + '</button></div></td>' +
+            '<td><div class="fin-project-cell"><span class="fin-project-dot" style="background:var(--proj-' + colorIdx + ')"></span><div class="fin-project-info"><button type="button" class="fin-project-name" data-action="select-project" data-id="' + p.id + '">' + escapeHtml(p.name) + '</button>' + noteCell + '</div></div></td>' +
             '<td>' + honCell + '</td>' +
             '<td>' + paidCell + '</td>' +
             '<td>' + dateCell + '</td>' +
