@@ -768,7 +768,7 @@
   .finance-table-count { font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; color: var(--ink-faint); }
   .finance-table-hint { margin-left: auto; font-size: 11px; color: var(--ink-faint); }
   .finance-table-wrap { overflow-x: auto; }
-  .finance-table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 620px; }
+  .finance-table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 740px; }
   .finance-table th {
     text-align: left;
     font-size: 10.5px;
@@ -823,7 +823,9 @@
   }
   .fin-status-pill.pending { background: var(--doing-soft); color: var(--doing); }
   .fin-status-pill.received { background: var(--done-soft); color: var(--done); }
+  .fin-status-pill.partial { background: var(--idea-soft); color: var(--idea); }
   .fin-status-none { font-size: 11px; color: var(--ink-faint); }
+  .fin-remaining { margin-top: 2px; font-size: 10.5px; color: var(--ink-faint); white-space: nowrap; }
   .finance-oneoff-section { margin-top: 18px; }
   .finance-oneoff-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .finance-oneoff-head h3 { font-size: 13.5px; font-weight: 700; }
@@ -1492,13 +1494,27 @@
     return state.finance.months[key];
   }
   function getFinanceEntry(monthData, projectId) {
-    return monthData.entries[projectId] || { honorarium: 0, honorariumStatus: "pending", paymentDate: null, budget: null, budgetStatus: "pending" };
+    return monthData.entries[projectId] || { honorarium: 0, honorariumPaid: 0, honorariumStatus: "pending", paymentDate: null, budget: null, budgetStatus: "pending" };
   }
   function ensureFinanceEntry(monthData, projectId) {
     if (!monthData.entries[projectId]) {
-      monthData.entries[projectId] = { honorarium: 0, honorariumStatus: "pending", paymentDate: null, budget: null, budgetStatus: "pending" };
+      monthData.entries[projectId] = { honorarium: 0, honorariumPaid: 0, honorariumStatus: "pending", paymentDate: null, budget: null, budgetStatus: "pending" };
     }
     return monthData.entries[projectId];
+  }
+  function getHonorariumPaid(entry) {
+    if (typeof entry.honorariumPaid === "number") return entry.honorariumPaid;
+    return entry.honorariumStatus === "received" ? (entry.honorarium || 0) : 0;
+  }
+  function getHonorariumRemaining(entry) {
+    return Math.max((entry.honorarium || 0) - getHonorariumPaid(entry), 0);
+  }
+  function getHonorariumState(entry) {
+    var total = entry.honorarium || 0;
+    var paid = getHonorariumPaid(entry);
+    if (total > 0 && paid >= total) return "received";
+    if (paid > 0) return "partial";
+    return "pending";
   }
   function getFinanceMonthTotals(monthData, projects) {
     var total = 0, received = 0, pending = 0, budgetTotal = 0;
@@ -1506,8 +1522,10 @@
       var e = monthData.entries[p.id];
       if (!e) return;
       var hon = e.honorarium || 0;
+      var paid = getHonorariumPaid(e);
       total += hon;
-      if (e.honorariumStatus === "received") received += hon; else pending += hon;
+      received += Math.min(paid, hon);
+      pending += Math.max(hon - paid, 0);
       if (e.budget != null) {
         total += e.budget;
         budgetTotal += e.budget;
@@ -1525,6 +1543,19 @@
     var m = ensureFinanceMonth(monthKey);
     var e = ensureFinanceEntry(m, projectId);
     e.honorarium = amount;
+    save(); render();
+  }
+  function setFinanceHonorariumPaid(monthKey, projectId, amount) {
+    var m = ensureFinanceMonth(monthKey);
+    var e = ensureFinanceEntry(m, projectId);
+    e.honorariumPaid = amount;
+    save(); render();
+  }
+  function toggleHonorariumFullyPaid(monthKey, projectId) {
+    var m = ensureFinanceMonth(monthKey);
+    var e = ensureFinanceEntry(m, projectId);
+    var total = e.honorarium || 0;
+    e.honorariumPaid = getHonorariumState(e) === "received" ? 0 : total;
     save(); render();
   }
   function setFinanceBudget(monthKey, projectId, amount) {
@@ -1558,6 +1589,7 @@
     }
     var monthKey = currentFinanceMonthKey();
     if (field === "honorarium") setFinanceHonorarium(monthKey, pid, num);
+    else if (field === "honorariumPaid") setFinanceHonorariumPaid(monthKey, pid, num);
     else setFinanceBudget(monthKey, pid, num);
   }
   function cancelEditFinance() {
@@ -2032,15 +2064,26 @@
         var colorIdx = getProjectColorIdx(p);
         var entry = getFinanceEntry(monthData, p.id);
         var editingHon = uiEditingFinanceField && uiEditingFinanceField.pid === p.id && uiEditingFinanceField.field === "honorarium";
+        var editingPaid = uiEditingFinanceField && uiEditingFinanceField.pid === p.id && uiEditingFinanceField.field === "honorariumPaid";
         var editingBudget = uiEditingFinanceField && uiEditingFinanceField.pid === p.id && uiEditingFinanceField.field === "budget";
 
         var honCell = editingHon
           ? '<input type="number" min="0" step="1" class="fin-amount-input" data-action="commit-edit-finance" data-field="honorarium" data-pid="' + p.id + '" value="' + entry.honorarium + '" />'
           : '<span class="fin-amount" data-action="start-edit-finance" data-field="honorarium" data-pid="' + p.id + '" title="Нажмите, чтобы изменить">' + formatMoney(entry.honorarium) + '</span>';
 
-        var dateCell = '<input type="date" class="fin-date-input' + (entry.paymentDate ? ' has-value' : '') + '" value="' + (entry.paymentDate || "") + '" data-action="set-finance-date" data-pid="' + p.id + '" aria-label="Дата оплаты" />';
+        var paidVal = getHonorariumPaid(entry);
+        var remaining = getHonorariumRemaining(entry);
+        var paidCell = editingPaid
+          ? '<input type="number" min="0" step="1" class="fin-amount-input" data-action="commit-edit-finance" data-field="honorariumPaid" data-pid="' + p.id + '" value="' + paidVal + '" />'
+          : '' +
+            '<span class="fin-amount" data-action="start-edit-finance" data-field="honorariumPaid" data-pid="' + p.id + '" title="Нажмите, чтобы изменить">' + formatMoney(paidVal) + '</span>' +
+            (remaining > 0 ? '<div class="fin-remaining">Осталось ' + formatMoney(remaining) + '</div>' : '');
 
-        var honStatusCell = '<button type="button" class="fin-status-pill ' + entry.honorariumStatus + '" data-action="toggle-fin-status" data-field="honorariumStatus" data-pid="' + p.id + '">' + (entry.honorariumStatus === "received" ? "Получено" : "Ожидается") + '</button>';
+        var dateCell = '<input type="date" class="fin-date-input' + (entry.paymentDate ? ' has-value' : '') + '" value="' + (entry.paymentDate || "") + '" data-action="set-finance-date" data-pid="' + p.id + '" aria-label="Дата остатка" />';
+
+        var honState = getHonorariumState(entry);
+        var honLabel = honState === "received" ? "Получено" : honState === "partial" ? "Частично" : "Ожидается";
+        var honStatusCell = '<button type="button" class="fin-status-pill ' + honState + '" data-action="toggle-fin-honorarium-paid" data-pid="' + p.id + '">' + honLabel + '</button>';
 
         var budgetCell = editingBudget
           ? '<input type="number" min="0" step="1" class="fin-amount-input" data-action="commit-edit-finance" data-field="budget" data-pid="' + p.id + '" value="' + (entry.budget == null ? "" : entry.budget) + '" />'
@@ -2054,6 +2097,7 @@
           '<tr>' +
             '<td><div class="fin-project-cell"><span class="fin-project-dot" style="background:var(--proj-' + colorIdx + ')"></span><button type="button" class="fin-project-name" data-action="select-project" data-id="' + p.id + '">' + escapeHtml(p.name) + '</button></div></td>' +
             '<td>' + honCell + '</td>' +
+            '<td>' + paidCell + '</td>' +
             '<td>' + dateCell + '</td>' +
             '<td>' + honStatusCell + '</td>' +
             '<td>' + budgetCell + '</td>' +
@@ -2069,7 +2113,7 @@
         '</div>' +
         '<div class="finance-table-wrap">' +
           '<table class="finance-table">' +
-            '<thead><tr><th>Проект</th><th>Гонорар</th><th>Дата оплаты</th><th>Статус</th><th>Бюджет</th><th>Статус</th></tr></thead>' +
+            '<thead><tr><th>Проект</th><th>Гонорар</th><th>Оплачено</th><th>Дата остатка</th><th>Статус</th><th>Бюджет</th><th>Статус</th></tr></thead>' +
             '<tbody>' + rows + '</tbody>' +
           '</table>' +
         '</div>';
@@ -2561,6 +2605,9 @@
         break;
       case "toggle-fin-status":
         toggleFinanceStatus(currentFinanceMonthKey(), el.getAttribute("data-pid"), el.getAttribute("data-field"));
+        break;
+      case "toggle-fin-honorarium-paid":
+        toggleHonorariumFullyPaid(currentFinanceMonthKey(), el.getAttribute("data-pid"));
         break;
       case "finance-open-oneoff":
         uiFinanceOneOffOpen = true;
