@@ -724,6 +724,143 @@
     font-size: 12px;
   }
 
+  /* ---------- Finance ---------- */
+  .finance-header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .finance-add-btn {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .finance-add-btn:hover { filter: brightness(1.06); }
+  .finance-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 14px 16px 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+  }
+  .finance-card .week-nav { margin: 0 0 14px; }
+  .finance-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .finance-stat { border-radius: 9px; padding: 10px 12px; background: var(--surface-2); }
+  .finance-stat.fin-received { background: var(--done-soft); }
+  .finance-stat.fin-pending { background: var(--doing-soft); }
+  .finance-stat.fin-budget { background: var(--accent-soft); }
+  .finance-stat-label { display: block; font-size: 11px; color: var(--ink-faint); margin-bottom: 4px; }
+  .finance-stat.fin-received .finance-stat-label { color: var(--done); opacity: 0.85; }
+  .finance-stat.fin-pending .finance-stat-label { color: var(--doing); opacity: 0.85; }
+  .finance-stat.fin-budget .finance-stat-label { color: var(--accent-soft-ink); opacity: 0.85; }
+  .finance-stat-value { font-size: 17px; font-weight: 700; color: var(--ink); }
+  .finance-stat.fin-received .finance-stat-value { color: var(--done); }
+  .finance-stat.fin-pending .finance-stat-value { color: var(--doing); }
+  .finance-stat.fin-budget .finance-stat-value { color: var(--accent-soft-ink); }
+  .finance-table-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .finance-table-head h3 { font-size: 13.5px; font-weight: 700; }
+  .finance-table-count { font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; color: var(--ink-faint); }
+  .finance-table-hint { margin-left: auto; font-size: 11px; color: var(--ink-faint); }
+  .finance-table-wrap { overflow-x: auto; }
+  .finance-table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 620px; }
+  .finance-table th {
+    text-align: left;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+    padding: 0 8px 8px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  .finance-table td { padding: 9px 8px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+  .finance-table tr:last-child td { border-bottom: none; }
+  .fin-project-cell { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .fin-project-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .fin-project-name { background: transparent; border: none; padding: 0; font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; text-align: left; }
+  .fin-project-name:hover { color: var(--accent); }
+  .fin-amount { cursor: text; border-radius: 4px; padding: 2px 4px; margin: -2px -4px; font-variant-numeric: tabular-nums; }
+  .fin-amount:hover { background: var(--surface-2); }
+  .fin-amount-empty { color: var(--ink-faint); }
+  .fin-amount-input {
+    width: 96px;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 5px;
+    padding: 3px 5px;
+  }
+  .fin-date-input {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 3px 5px;
+    border-radius: 6px;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--ink-soft);
+    width: 118px;
+  }
+  .fin-date-input.has-value { border-style: solid; }
+  .fin-status-pill {
+    display: inline-flex;
+    align-items: center;
+    border: none;
+    padding: 3px 9px;
+    border-radius: 100px;
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .fin-status-pill.pending { background: var(--doing-soft); color: var(--doing); }
+  .fin-status-pill.received { background: var(--done-soft); color: var(--done); }
+  .fin-status-none { font-size: 11px; color: var(--ink-faint); }
+  .finance-oneoff-section { margin-top: 18px; }
+  .finance-oneoff-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .finance-oneoff-head h3 { font-size: 13.5px; font-weight: 700; }
+  .finance-oneoff-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  .finance-oneoff-form input { padding: 8px 10px; border-radius: 7px; border: 1px solid var(--border); background: var(--bg); font-size: 12.5px; color: var(--ink); }
+  .finance-oneoff-form input:focus-visible { border-color: var(--accent); }
+  .finance-oneoff-form input[name="title"] { flex: 1 1 180px; min-width: 0; }
+  .finance-oneoff-form input[name="amount"] { flex: 0 0 130px; }
+  .finance-oneoff-form input[name="date"] { flex: 0 0 150px; }
+  .finance-oneoff-form-actions { display: flex; gap: 6px; flex: none; }
+  .finance-oneoff-form-actions button { padding: 8px 14px; border-radius: 7px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+  .finance-oneoff-form-actions button[type="submit"] { border: none; background: var(--accent); color: var(--accent-ink); }
+  .finance-oneoff-form-actions button[type="button"] { border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft); }
+  .oneoff-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+    padding: 10px 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .oneoff-title { flex: 1 1 auto; min-width: 0; font-size: 12.5px; font-weight: 600; word-break: break-word; }
+  .oneoff-amount { flex: none; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .oneoff-date { flex: none; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-faint); }
+
   /* ---------- Ideas & Links ---------- */
   .panel-max { max-width: 640px; }
   .add-idea-form, .add-link-form {
@@ -923,6 +1060,8 @@
     .board { grid-template-columns: 1fr; }
     .week-grid { grid-template-columns: 1fr; }
     .projects-io { display: block; }
+    .finance-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .finance-oneoff-form input[name="title"], .finance-oneoff-form input[name="amount"], .finance-oneoff-form input[name="date"] { flex: 1 1 100%; }
     .archive-add-bar form { flex-direction: column; }
     .archive-add-bar select { flex: 1 1 auto; }
     .bottom-tabs {
@@ -962,6 +1101,9 @@
   var uiEditingTaskId = null;
   var suppressEditBlur = false;
   var dragTaskData = null;
+  var uiFinanceMonthOffset = 0;
+  var uiFinanceOneOffOpen = false;
+  var uiEditingFinanceField = null;
   var downloadsApi = null;
 
   var STATUS_LABEL = { todo: "К выполнению", doing: "В работе", done: "Готово" };
@@ -1012,6 +1154,26 @@
     if (task.deadline < todayStamp()) return "overdue";
     if (task.deadline === todayStamp()) return "today";
     return "upcoming";
+  }
+  function monthKeyFromOffset(offset) {
+    var d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + offset);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+  }
+  function currentFinanceMonthKey() { return monthKeyFromOffset(uiFinanceMonthOffset); }
+  function monthLabel(key) {
+    try {
+      var parts = key.split("-");
+      var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
+      var label = d.toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
+      return label.charAt(0).toUpperCase() + label.slice(1) + " г.";
+    } catch (e) { return key; }
+  }
+  function formatMoney(n) {
+    n = Math.round(Number(n) || 0);
+    var s = Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return (n < 0 ? "-" : "") + s + " ₸";
   }
   var PROJECT_COLOR_COUNT = 8;
   function getProjectColorIdx(p) {
@@ -1084,15 +1246,20 @@
   /* ---------- State ---------- */
   var state = loadState();
 
+  function normalizeState(s) {
+    if (!s || !Array.isArray(s.projects)) s = { projects: [], activeId: null };
+    if (!s.finance || typeof s.finance !== "object" || !s.finance.months || typeof s.finance.months !== "object") {
+      s.finance = { months: {} };
+    }
+    return s;
+  }
   function loadState() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { projects: [], activeId: null };
-      var parsed = JSON.parse(raw);
-      if (!parsed || !Array.isArray(parsed.projects)) return { projects: [], activeId: null };
-      return parsed;
+      if (!raw) return normalizeState(null);
+      return normalizeState(JSON.parse(raw));
     } catch (e) {
-      return { projects: [], activeId: null };
+      return normalizeState(null);
     }
   }
   var lastSavedAt = null;
@@ -1177,7 +1344,7 @@
           try {
             var parsed = JSON.parse(json.data);
             if (parsed && Array.isArray(parsed.projects)) {
-              state = parsed;
+              state = normalizeState(parsed);
               persistLocal();
               setLocalModifiedAt(json.updatedAt);
               render();
@@ -1317,6 +1484,112 @@
       t.deadline = prevDeadline; save(); render();
     });
   }
+
+  /* ---------- Finance ---------- */
+  function ensureFinanceMonth(key) {
+    if (!state.finance || typeof state.finance !== "object") state.finance = { months: {} };
+    if (!state.finance.months[key]) state.finance.months[key] = { entries: {}, oneOffs: [] };
+    return state.finance.months[key];
+  }
+  function getFinanceEntry(monthData, projectId) {
+    return monthData.entries[projectId] || { honorarium: 0, honorariumStatus: "pending", paymentDate: null, budget: null, budgetStatus: "pending" };
+  }
+  function ensureFinanceEntry(monthData, projectId) {
+    if (!monthData.entries[projectId]) {
+      monthData.entries[projectId] = { honorarium: 0, honorariumStatus: "pending", paymentDate: null, budget: null, budgetStatus: "pending" };
+    }
+    return monthData.entries[projectId];
+  }
+  function getFinanceMonthTotals(monthData, projects) {
+    var total = 0, received = 0, pending = 0, budgetTotal = 0;
+    projects.forEach(function (p) {
+      var e = monthData.entries[p.id];
+      if (!e) return;
+      var hon = e.honorarium || 0;
+      total += hon;
+      if (e.honorariumStatus === "received") received += hon; else pending += hon;
+      if (e.budget != null) {
+        total += e.budget;
+        budgetTotal += e.budget;
+        if (e.budgetStatus === "received") received += e.budget; else pending += e.budget;
+      }
+    });
+    monthData.oneOffs.forEach(function (o) {
+      var amt = o.amount || 0;
+      total += amt;
+      if (o.status === "received") received += amt; else pending += amt;
+    });
+    return { total: total, received: received, pending: pending, budgetTotal: budgetTotal };
+  }
+  function setFinanceHonorarium(monthKey, projectId, amount) {
+    var m = ensureFinanceMonth(monthKey);
+    var e = ensureFinanceEntry(m, projectId);
+    e.honorarium = amount;
+    save(); render();
+  }
+  function setFinanceBudget(monthKey, projectId, amount) {
+    var m = ensureFinanceMonth(monthKey);
+    var e = ensureFinanceEntry(m, projectId);
+    e.budget = amount;
+    if (amount != null && !e.budgetStatus) e.budgetStatus = "pending";
+    save(); render();
+  }
+  function setFinancePaymentDate(monthKey, projectId, dateStr) {
+    var m = ensureFinanceMonth(monthKey);
+    var e = ensureFinanceEntry(m, projectId);
+    e.paymentDate = dateStr || null;
+    save(); render();
+  }
+  function toggleFinanceStatus(monthKey, projectId, field) {
+    var m = ensureFinanceMonth(monthKey);
+    var e = ensureFinanceEntry(m, projectId);
+    e[field] = e[field] === "received" ? "pending" : "received";
+    save(); render();
+  }
+  function commitEditFinance(pid, field, rawValue) {
+    uiEditingFinanceField = null;
+    var trimmed = String(rawValue == null ? "" : rawValue).trim();
+    var num;
+    if (trimmed === "") {
+      num = field === "budget" ? null : 0;
+    } else {
+      num = Math.max(0, Math.round(Number(trimmed)));
+      if (isNaN(num)) num = field === "budget" ? null : 0;
+    }
+    var monthKey = currentFinanceMonthKey();
+    if (field === "honorarium") setFinanceHonorarium(monthKey, pid, num);
+    else setFinanceBudget(monthKey, pid, num);
+  }
+  function cancelEditFinance() {
+    uiEditingFinanceField = null;
+    render();
+  }
+  function addOneOff(monthKey, title, amount, date) {
+    var m = ensureFinanceMonth(monthKey);
+    var clean = title.trim();
+    if (!clean) return;
+    m.oneOffs.unshift({ id: uid(), title: clean, amount: Math.max(0, Math.round(Number(amount) || 0)), date: date || null, status: "pending", createdAt: nowIso() });
+    save(); render();
+  }
+  function toggleOneOffStatus(monthKey, id) {
+    var m = ensureFinanceMonth(monthKey);
+    var o = m.oneOffs.find(function (x) { return x.id === id; });
+    if (!o) return;
+    o.status = o.status === "received" ? "pending" : "received";
+    save(); render();
+  }
+  function deleteOneOff(monthKey, id) {
+    var m = ensureFinanceMonth(monthKey);
+    var idx = m.oneOffs.findIndex(function (x) { return x.id === id; });
+    if (idx === -1) return;
+    var removed = m.oneOffs[idx];
+    m.oneOffs.splice(idx, 1);
+    save(); render();
+    showToast("Разовая оплата удалена", function () {
+      m.oneOffs.splice(idx, 0, removed); save(); render();
+    });
+  }
+
   function cycleTaskStatus(projectId, taskId) {
     var p = state.projects.find(function (x) { return x.id === projectId; });
     if (!p) return;
@@ -1456,7 +1729,7 @@
         var parsed = JSON.parse(String(reader.result));
         if (!parsed || !Array.isArray(parsed.projects)) throw new Error("bad shape");
         var prevState = deepClone(state);
-        state = { projects: parsed.projects, activeId: parsed.activeId || (parsed.projects[0] ? parsed.projects[0].id : null) };
+        state = normalizeState({ projects: parsed.projects, activeId: parsed.activeId || (parsed.projects[0] ? parsed.projects[0].id : null), finance: parsed.finance });
         uiActiveTab = "board";
         save(); render();
         showToast("Данные импортированы", function () { state = prevState; save(); render(); });
@@ -1484,7 +1757,8 @@
     week: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="3" width="13" height="10.5" rx="1.3" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 7H14.5" stroke="currentColor" stroke-width="1.1"/><path d="M4.8 3V5.1M8 3V5.1M11.2 3V5.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
     projects: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4.3a1 1 0 0 1 1-1h2.8l1.1 1.4H13a1 1 0 0 1 1 1V11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4.3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
     personal: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="5.1" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.8 13.3c0-2.7 2.3-4.4 5.2-4.4s5.2 1.7 5.2 4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
-    archive: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="12" height="3" rx="0.8" stroke="currentColor" stroke-width="1.3"/><path d="M3 6.5V12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6.5" stroke="currentColor" stroke-width="1.3"/><path d="M6.5 9H9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+    archive: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="12" height="3" rx="0.8" stroke="currentColor" stroke-width="1.3"/><path d="M3 6.5V12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6.5" stroke="currentColor" stroke-width="1.3"/><path d="M6.5 9H9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+    finance: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="4" width="13" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 6.7H14.5" stroke="currentColor" stroke-width="1.1"/><circle cx="11.2" cy="9.8" r="1.05" fill="currentColor"/></svg>'
   };
 
   /* ---------- Today aggregation ---------- */
@@ -1607,6 +1881,9 @@
             ICONS.archive + '<span class="today-nav-label">Архив</span>' +
             (archivedTotal ? '<span class="today-nav-count tabular">' + archivedTotal + '</span>' : '') +
           '</button>' +
+          '<button type="button" class="today-nav' + (uiView === "finance" ? " active" : "") + '" data-action="set-view" data-view="finance">' +
+            ICONS.finance + '<span class="today-nav-label">Финансы</span>' +
+          '</button>' +
           '<button type="button" class="today-nav' + (projectsActive ? " active" : "") + '" data-action="set-view" data-view="projects">' +
             ICONS.projects + '<span class="today-nav-label">Проекты</span>' +
             (workCount ? '<span class="today-nav-count tabular">' + workCount + '</span>' : '') +
@@ -1719,6 +1996,135 @@
     '</div>';
   }
 
+  function renderFinanceHtml() {
+    var mobileBar = '<div class="mobile-bar"><span class="mobile-title">Финансы</span></div>';
+    var monthKey = currentFinanceMonthKey();
+    var monthData = state.finance.months[monthKey] || { entries: {}, oneOffs: [] };
+    var workProjects = state.projects.filter(function (p) { return getProjectCategory(p) === "work"; });
+    var totals = getFinanceMonthTotals(monthData, workProjects);
+
+    var monthNav = '' +
+      '<div class="week-nav">' +
+        '<button type="button" class="week-nav-btn" data-action="finance-prev-month" aria-label="Предыдущий месяц">' + ICONS.arrowLeft + '</button>' +
+        '<span class="week-range">' + monthLabel(monthKey) + '</span>' +
+        '<button type="button" class="week-nav-btn" data-action="finance-next-month" aria-label="Следующий месяц">' + ICONS.arrowRight + '</button>' +
+        (uiFinanceMonthOffset !== 0 ? '<button type="button" class="week-nav-today" data-action="finance-month-today">Текущий</button>' : "") +
+      '</div>';
+
+    var stats = '' +
+      '<div class="finance-stats">' +
+        '<div class="finance-stat"><span class="finance-stat-label">Всего за месяц</span><span class="finance-stat-value tabular">' + formatMoney(totals.total) + '</span></div>' +
+        '<div class="finance-stat fin-received"><span class="finance-stat-label">Получено</span><span class="finance-stat-value tabular">' + formatMoney(totals.received) + '</span></div>' +
+        '<div class="finance-stat fin-pending"><span class="finance-stat-label">Ожидается</span><span class="finance-stat-value tabular">' + formatMoney(totals.pending) + '</span></div>' +
+        '<div class="finance-stat fin-budget"><span class="finance-stat-label">Рекл. бюджеты</span><span class="finance-stat-value tabular">' + formatMoney(totals.budgetTotal) + '</span></div>' +
+      '</div>';
+
+    var tableSection;
+    if (!workProjects.length) {
+      tableSection = '' +
+        '<div class="empty-state">' +
+          '<span class="brand-mark">' + ICONS.finance + '</span>' +
+          '<h2>Пока нет проектов</h2>' +
+          '<p>Добавьте проект в разделе «Проекты» — здесь появится строка для его гонорара и бюджета.</p>' +
+        '</div>';
+    } else {
+      var rows = workProjects.map(function (p) {
+        var colorIdx = getProjectColorIdx(p);
+        var entry = getFinanceEntry(monthData, p.id);
+        var editingHon = uiEditingFinanceField && uiEditingFinanceField.pid === p.id && uiEditingFinanceField.field === "honorarium";
+        var editingBudget = uiEditingFinanceField && uiEditingFinanceField.pid === p.id && uiEditingFinanceField.field === "budget";
+
+        var honCell = editingHon
+          ? '<input type="number" min="0" step="1" class="fin-amount-input" data-action="commit-edit-finance" data-field="honorarium" data-pid="' + p.id + '" value="' + entry.honorarium + '" />'
+          : '<span class="fin-amount" data-action="start-edit-finance" data-field="honorarium" data-pid="' + p.id + '" title="Нажмите, чтобы изменить">' + formatMoney(entry.honorarium) + '</span>';
+
+        var dateCell = '<input type="date" class="fin-date-input' + (entry.paymentDate ? ' has-value' : '') + '" value="' + (entry.paymentDate || "") + '" data-action="set-finance-date" data-pid="' + p.id + '" aria-label="Дата оплаты" />';
+
+        var honStatusCell = '<button type="button" class="fin-status-pill ' + entry.honorariumStatus + '" data-action="toggle-fin-status" data-field="honorariumStatus" data-pid="' + p.id + '">' + (entry.honorariumStatus === "received" ? "Получено" : "Ожидается") + '</button>';
+
+        var budgetCell = editingBudget
+          ? '<input type="number" min="0" step="1" class="fin-amount-input" data-action="commit-edit-finance" data-field="budget" data-pid="' + p.id + '" value="' + (entry.budget == null ? "" : entry.budget) + '" />'
+          : '<span class="fin-amount' + (entry.budget == null ? " fin-amount-empty" : "") + '" data-action="start-edit-finance" data-field="budget" data-pid="' + p.id + '" title="Нажмите, чтобы изменить">' + (entry.budget == null ? "—" : formatMoney(entry.budget)) + '</span>';
+
+        var budgetStatusCell = entry.budget == null
+          ? '<span class="fin-status-none">нет</span>'
+          : '<button type="button" class="fin-status-pill ' + entry.budgetStatus + '" data-action="toggle-fin-status" data-field="budgetStatus" data-pid="' + p.id + '">' + (entry.budgetStatus === "received" ? "Получено" : "Ожидается") + '</button>';
+
+        return '' +
+          '<tr>' +
+            '<td><div class="fin-project-cell"><span class="fin-project-dot" style="background:var(--proj-' + colorIdx + ')"></span><button type="button" class="fin-project-name" data-action="select-project" data-id="' + p.id + '">' + escapeHtml(p.name) + '</button></div></td>' +
+            '<td>' + honCell + '</td>' +
+            '<td>' + dateCell + '</td>' +
+            '<td>' + honStatusCell + '</td>' +
+            '<td>' + budgetCell + '</td>' +
+            '<td>' + budgetStatusCell + '</td>' +
+          '</tr>';
+      }).join("");
+
+      tableSection = '' +
+        '<div class="finance-table-head">' +
+          '<h3>Проекты — гонорар и бюджет</h3>' +
+          '<span class="finance-table-count tabular">' + workProjects.length + '</span>' +
+          '<span class="finance-table-hint">Нажмите на сумму или статус, чтобы изменить</span>' +
+        '</div>' +
+        '<div class="finance-table-wrap">' +
+          '<table class="finance-table">' +
+            '<thead><tr><th>Проект</th><th>Гонорар</th><th>Дата оплаты</th><th>Статус</th><th>Бюджет</th><th>Статус</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody>' +
+          '</table>' +
+        '</div>';
+    }
+
+    var oneOffs = monthData.oneOffs || [];
+    var oneOffForm = uiFinanceOneOffOpen
+      ? '' +
+        '<form class="finance-oneoff-form" data-action="finance-oneoff-form">' +
+          '<input type="text" name="title" placeholder="За что оплата…" autofocus />' +
+          '<input type="number" name="amount" min="0" step="1" placeholder="Сумма, ₸" />' +
+          '<input type="date" name="date" aria-label="Дата" />' +
+          '<div class="finance-oneoff-form-actions">' +
+            '<button type="submit">Добавить</button>' +
+            '<button type="button" data-action="finance-cancel-oneoff">Отмена</button>' +
+          '</div>' +
+        '</form>'
+      : "";
+    var oneOffList = oneOffs.length
+      ? oneOffs.map(function (o) {
+          return '' +
+            '<div class="oneoff-card">' +
+              '<span class="oneoff-title">' + escapeHtml(o.title) + '</span>' +
+              (o.date ? '<span class="oneoff-date tabular">' + formatDeadline(o.date) + '</span>' : "") +
+              '<span class="oneoff-amount tabular">' + formatMoney(o.amount) + '</span>' +
+              '<button type="button" class="fin-status-pill ' + o.status + '" data-action="toggle-oneoff-status" data-id="' + o.id + '">' + (o.status === "received" ? "Получено" : "Ожидается") + '</button>' +
+              '<button type="button" class="icon-btn danger icon-only" data-action="delete-oneoff" data-id="' + o.id + '" aria-label="Удалить">' + ICONS.trash + '</button>' +
+            '</div>';
+        }).join("")
+      : (uiFinanceOneOffOpen ? "" : '<div class="empty-tab">Разовых оплат за этот месяц нет</div>');
+
+    var oneOffSection = '' +
+      '<div class="finance-oneoff-section">' +
+        '<div class="finance-oneoff-head">' +
+          '<h3>Разовые оплаты</h3>' +
+          (uiFinanceOneOffOpen ? "" : '<button type="button" class="finance-add-btn" data-action="finance-open-oneoff">' + ICONS.plus + ' Добавить</button>') +
+        '</div>' +
+        oneOffForm + oneOffList +
+      '</div>';
+
+    return '<div class="main">' + mobileBar +
+      '<div class="main-header">' +
+        '<div class="finance-header-row">' +
+          '<h1 class="page-title">Финансы</h1>' +
+          '<button type="button" class="finance-add-btn" data-action="finance-open-oneoff">' + ICONS.plus + ' Разовая оплата</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="content">' +
+        '<div class="finance-card">' + monthNav + stats + '</div>' +
+        '<div class="finance-card">' + tableSection + '</div>' +
+        oneOffSection +
+      '</div>' +
+    '</div>';
+  }
+
   function renderWeekTaskChip(p, t) {
     var dotContent = t.status === "done" ? ICONS.check : "";
     var isEditing = uiEditingTaskId === t.id;
@@ -1819,6 +2225,7 @@
       { view: "today", icon: ICONS.today, label: "Сегодня", badge: todayTotal },
       { view: "week", icon: ICONS.week, label: "Неделя" },
       { view: "archive", icon: ICONS.archive, label: "Архив", badge: archivedTotal },
+      { view: "finance", icon: ICONS.finance, label: "Финансы" },
       { view: "projects", icon: ICONS.projects, label: "Проекты" },
       { view: "personal", icon: ICONS.personal, label: "Личное" }
     ];
@@ -1842,6 +2249,7 @@
     else if (uiView === "projects") pageHtml = renderProjectsPageHtml("work", "Проекты");
     else if (uiView === "personal") pageHtml = renderProjectsPageHtml("personal", "Личное");
     else if (uiView === "archive") pageHtml = renderArchiveHtml();
+    else if (uiView === "finance") pageHtml = renderFinanceHtml();
     else pageHtml = renderProjectDetailHtml();
     return pageHtml + renderBottomTabsHtml();
   }
@@ -2019,16 +2427,28 @@
     root.addEventListener("dragend", onDragEnd);
   }
   function onFocusOut(e) {
-    var el = e.target.closest("[data-action='commit-edit-task']");
-    if (!el) return;
-    if (suppressEditBlur) { suppressEditBlur = false; return; }
-    commitEditTask(el.getAttribute("data-pid"), el.getAttribute("data-tid"), el.value);
+    var taskEl = e.target.closest("[data-action='commit-edit-task']");
+    if (taskEl) {
+      if (suppressEditBlur) { suppressEditBlur = false; return; }
+      commitEditTask(taskEl.getAttribute("data-pid"), taskEl.getAttribute("data-tid"), taskEl.value);
+      return;
+    }
+    var finEl = e.target.closest("[data-action='commit-edit-finance']");
+    if (finEl) {
+      if (suppressEditBlur) { suppressEditBlur = false; return; }
+      commitEditFinance(finEl.getAttribute("data-pid"), finEl.getAttribute("data-field"), finEl.value);
+    }
   }
   function onEditKeyDown(e) {
-    var el = e.target.closest("[data-action='commit-edit-task']");
+    var el = e.target.closest("[data-action='commit-edit-task'], [data-action='commit-edit-finance']");
     if (!el) return;
     if (e.key === "Enter") { e.preventDefault(); el.blur(); }
-    else if (e.key === "Escape") { e.preventDefault(); suppressEditBlur = true; cancelEditTask(); }
+    else if (e.key === "Escape") {
+      e.preventDefault();
+      suppressEditBlur = true;
+      if (el.getAttribute("data-action") === "commit-edit-task") cancelEditTask();
+      else cancelEditFinance();
+    }
   }
   function onDragStart(e) {
     var el = e.target.closest(".week-task");
@@ -2102,6 +2522,7 @@
       case "set-view":
         uiView = el.getAttribute("data-view");
         if (uiView === "week") uiWeekOffset = 0;
+        if (uiView === "finance") { uiFinanceMonthOffset = 0; uiFinanceOneOffOpen = false; }
         uiAddProjectOpen = false;
         render();
         break;
@@ -2122,6 +2543,40 @@
         render();
         var editInput = document.querySelector('[data-action="commit-edit-task"]');
         if (editInput) { editInput.focus(); editInput.select(); }
+        break;
+      case "start-edit-finance":
+        uiEditingFinanceField = { pid: el.getAttribute("data-pid"), field: el.getAttribute("data-field") };
+        render();
+        var editFinInput = document.querySelector('[data-action="commit-edit-finance"]');
+        if (editFinInput) { editFinInput.focus(); editFinInput.select(); }
+        break;
+      case "finance-prev-month":
+        uiFinanceMonthOffset -= 1; render();
+        break;
+      case "finance-next-month":
+        uiFinanceMonthOffset += 1; render();
+        break;
+      case "finance-month-today":
+        uiFinanceMonthOffset = 0; render();
+        break;
+      case "toggle-fin-status":
+        toggleFinanceStatus(currentFinanceMonthKey(), el.getAttribute("data-pid"), el.getAttribute("data-field"));
+        break;
+      case "finance-open-oneoff":
+        uiFinanceOneOffOpen = true;
+        render();
+        var oneOffInput = document.querySelector('.finance-oneoff-form input[name="title"]');
+        if (oneOffInput) oneOffInput.focus();
+        break;
+      case "finance-cancel-oneoff":
+        uiFinanceOneOffOpen = false;
+        render();
+        break;
+      case "toggle-oneoff-status":
+        toggleOneOffStatus(currentFinanceMonthKey(), el.getAttribute("data-id"));
+        break;
+      case "delete-oneoff":
+        deleteOneOff(currentFinanceMonthKey(), el.getAttribute("data-id"));
         break;
       case "week-open-add":
         uiWeekAddOpenDate = el.getAttribute("data-date");
@@ -2213,6 +2668,11 @@
       addIdea(form.getAttribute("data-id"), form.elements["text"].value);
     } else if (action === "add-link-form") {
       addLink(form.getAttribute("data-id"), form.elements["title"].value, form.elements["url"].value);
+    } else if (action === "finance-oneoff-form") {
+      var oneOffTitle = form.elements["title"].value;
+      if (!oneOffTitle.trim()) { render(); return; }
+      uiFinanceOneOffOpen = false;
+      addOneOff(currentFinanceMonthKey(), oneOffTitle, form.elements["amount"].value, form.elements["date"].value);
     }
   }
 
@@ -2220,7 +2680,9 @@
     var el = e.target.closest("[data-action='rename-project']");
     if (el) { renameProject(el.getAttribute("data-id"), el.value); return; }
     var dl = e.target.closest("[data-action='set-deadline']");
-    if (dl) setTaskDeadline(dl.getAttribute("data-pid"), dl.getAttribute("data-tid"), dl.value);
+    if (dl) { setTaskDeadline(dl.getAttribute("data-pid"), dl.getAttribute("data-tid"), dl.value); return; }
+    var fd = e.target.closest("[data-action='set-finance-date']");
+    if (fd) setFinancePaymentDate(currentFinanceMonthKey(), fd.getAttribute("data-pid"), fd.value);
   }
 
   /* ---------- Capabilities ---------- */
