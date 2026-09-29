@@ -476,6 +476,24 @@
     font-size: 11.5px; font-weight: 700; padding: 4px 9px; border-radius: 100px; cursor: pointer;
   }
   .week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; align-items: start; }
+  .week-archive-zone {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 14px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--ink-faint);
+    background: var(--surface);
+  }
+  .week-archive-zone svg { flex: none; }
+  .week-archive-label { font-size: 12.5px; font-weight: 700; color: var(--ink-soft); }
+  .week-archive-hint { font-size: 11px; color: var(--ink-faint); }
+  .week-archive-zone.drag-over { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-soft-ink); }
+  .week-archive-zone.drag-over .week-archive-label, .week-archive-zone.drag-over .week-archive-hint { color: var(--accent-soft-ink); }
   .week-day {
     min-width: 0;
     min-height: 90px;
@@ -2305,7 +2323,10 @@
           (uiWeekOffset !== 0 ? '<button type="button" class="week-nav-today" data-action="week-today">Сегодня</button>' : "") +
         '</div>' +
       '</div>' +
-      '<div class="content"><div class="week-grid">' + dayBlocks + '</div></div>' +
+      '<div class="content">' +
+        '<div class="week-grid">' + dayBlocks + '</div>' +
+        '<div class="week-archive-zone">' + ICONS.archive + '<span class="week-archive-label">Архив</span><span class="week-archive-hint">Перетащите сюда задачу, чтобы отправить в архив</span></div>' +
+      '</div>' +
     '</div>';
   }
 
@@ -2560,35 +2581,40 @@
     try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragTaskData.tid); } catch (err) {}
     el.classList.add("dragging");
   }
+  var WEEK_DROPZONE_SELECTOR = ".week-day, .week-archive-zone";
   function onDragOver(e) {
     if (!dragTaskData) return;
-    var day = e.target.closest(".week-day");
-    if (!day) return;
+    var zone = e.target.closest(WEEK_DROPZONE_SELECTOR);
+    if (!zone) return;
     e.preventDefault();
     try { e.dataTransfer.dropEffect = "move"; } catch (err) {}
-    if (!day.classList.contains("drag-over")) {
-      var prev = document.querySelector(".week-day.drag-over");
-      if (prev && prev !== day) prev.classList.remove("drag-over");
-      day.classList.add("drag-over");
+    if (!zone.classList.contains("drag-over")) {
+      var prev = document.querySelector(".drag-over");
+      if (prev && prev !== zone) prev.classList.remove("drag-over");
+      zone.classList.add("drag-over");
     }
   }
   function onDragLeave(e) {
-    var day = e.target.closest(".week-day");
-    if (!day || day.contains(e.relatedTarget)) return;
-    day.classList.remove("drag-over");
+    var zone = e.target.closest(WEEK_DROPZONE_SELECTOR);
+    if (!zone || zone.contains(e.relatedTarget)) return;
+    zone.classList.remove("drag-over");
   }
   function onDrop(e) {
-    var day = e.target.closest(".week-day");
-    if (!day || !dragTaskData) return;
+    var zone = e.target.closest(WEEK_DROPZONE_SELECTOR);
+    if (!zone || !dragTaskData) return;
     e.preventDefault();
-    day.classList.remove("drag-over");
-    moveTaskToDate(dragTaskData.pid, dragTaskData.tid, day.getAttribute("data-date"));
+    zone.classList.remove("drag-over");
+    if (zone.classList.contains("week-archive-zone")) {
+      archiveTask(dragTaskData.pid, dragTaskData.tid);
+    } else {
+      moveTaskToDate(dragTaskData.pid, dragTaskData.tid, zone.getAttribute("data-date"));
+    }
     dragTaskData = null;
   }
   function onDragEnd() {
     var draggingEl = document.querySelector(".week-task.dragging");
     if (draggingEl) draggingEl.classList.remove("dragging");
-    var overEl = document.querySelector(".week-day.drag-over");
+    var overEl = document.querySelector(".drag-over");
     if (overEl) overEl.classList.remove("drag-over");
     dragTaskData = null;
   }
