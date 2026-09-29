@@ -478,22 +478,39 @@
   .week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; align-items: start; }
   .week-archive-zone {
     margin-top: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    padding: 14px;
-    border: 1px dashed var(--border);
+    padding: 10px 12px 12px;
+    border: 1px solid var(--border-soft);
     border-radius: 8px;
-    color: var(--ink-faint);
     background: var(--surface);
   }
-  .week-archive-zone svg { flex: none; }
-  .week-archive-label { font-size: 12.5px; font-weight: 700; color: var(--ink-soft); }
-  .week-archive-hint { font-size: 11px; color: var(--ink-faint); }
-  .week-archive-zone.drag-over { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-soft-ink); }
-  .week-archive-zone.drag-over .week-archive-label, .week-archive-zone.drag-over .week-archive-hint { color: var(--accent-soft-ink); }
+  .week-archive-zone.drag-over { border-color: var(--accent); background: var(--accent-soft); }
+  .week-archive-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .week-archive-header svg { flex: none; color: var(--ink-faint); }
+  .week-archive-header .count { font-family: var(--font-mono); font-weight: 600; color: var(--ink-faint); }
+  .week-archive-hint { font-weight: 400; font-size: 11px; color: var(--ink-faint); margin-left: auto; }
+  .week-archive-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px 18px;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+  .week-archive-body .category-section { display: contents; }
+  .week-archive-body .category-label { flex-basis: 100%; margin: 4px 0 -2px; }
+  .week-archive-body .week-day-group { flex: 0 0 190px; margin-bottom: 6px; }
+  .week-archive-task { cursor: grab; }
+  .week-archive-empty { padding: 10px 0; color: var(--ink-faint); font-size: 12px; }
   .week-day {
     min-width: 0;
     min-height: 90px;
@@ -1117,6 +1134,9 @@
     .content { padding: 16px 16px calc(72px + env(safe-area-inset-bottom, 0px)); }
     .board { grid-template-columns: 1fr; }
     .week-grid { grid-template-columns: 1fr; }
+    .week-archive-header { flex-wrap: wrap; }
+    .week-archive-hint { flex-basis: 100%; margin-left: 0; }
+    .week-archive-body .week-day-group { flex: 1 1 100%; }
     .projects-io { display: block; }
     .finance-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .finance-oneoff-form input[name="title"], .finance-oneoff-form input[name="amount"], .finance-oneoff-form input[name="date"] { flex: 1 1 100%; }
@@ -2325,9 +2345,40 @@
       '</div>' +
       '<div class="content">' +
         '<div class="week-grid">' + dayBlocks + '</div>' +
-        '<div class="week-archive-zone">' + ICONS.archive + '<span class="week-archive-label">Архив</span><span class="week-archive-hint">Перетащите сюда задачу, чтобы отправить в архив</span></div>' +
+        renderWeekArchiveZoneHtml() +
       '</div>' +
     '</div>';
+  }
+
+  function renderWeekArchiveChip(p, t) {
+    return '' +
+      '<div class="week-task week-archive-task" draggable="true" data-pid="' + p.id + '" data-tid="' + t.id + '">' +
+        '<span class="week-task-title">' + escapeHtml(t.title) + '</span>' +
+        '<button type="button" class="week-task-del" data-action="delete-task" data-pid="' + p.id + '" data-tid="' + t.id + '" aria-label="Удалить окончательно">' + ICONS.trash + '</button>' +
+      '</div>';
+  }
+
+  function renderWeekArchiveZoneHtml() {
+    var data = getArchivedGroups();
+    var bodyHtml = data.groups.length
+      ? renderCategorySections(data.groups, function (g) {
+          var colorIdx = getProjectColorIdx(g.project);
+          return '' +
+            '<div class="week-day-group">' +
+              '<button type="button" class="week-day-project task-project-badge" data-action="select-project" data-id="' + g.project.id + '" style="background:var(--proj-' + colorIdx + '-soft);color:var(--proj-' + colorIdx + ')">' + escapeHtml(g.project.name) + '</button>' +
+              g.tasks.map(function (t) { return renderWeekArchiveChip(g.project, t); }).join("") +
+            '</div>';
+        })
+      : '<div class="week-archive-empty">Архив пуст</div>';
+
+    return '' +
+      '<div class="week-archive-zone">' +
+        '<div class="week-archive-header">' + ICONS.archive + '<span>Архив</span>' +
+          (data.total ? '<span class="count tabular">' + data.total + '</span>' : '') +
+          '<span class="week-archive-hint">перетащите задачу сюда — в архив, а отсюда на день — обратно</span>' +
+        '</div>' +
+        '<div class="week-archive-body">' + bodyHtml + '</div>' +
+      '</div>';
   }
 
   function renderProjectsPageHtml(category, title) {
@@ -2577,7 +2628,8 @@
   function onDragStart(e) {
     var el = e.target.closest(".week-task");
     if (!el || el.getAttribute("draggable") !== "true") return;
-    dragTaskData = { pid: el.getAttribute("data-pid"), tid: el.getAttribute("data-tid") };
+    var fromArchive = !!el.closest(".week-archive-zone");
+    dragTaskData = { pid: el.getAttribute("data-pid"), tid: el.getAttribute("data-tid"), from: fromArchive ? "archive" : "day" };
     try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragTaskData.tid); } catch (err) {}
     el.classList.add("dragging");
   }
@@ -2605,7 +2657,9 @@
     e.preventDefault();
     zone.classList.remove("drag-over");
     if (zone.classList.contains("week-archive-zone")) {
-      archiveTask(dragTaskData.pid, dragTaskData.tid);
+      if (dragTaskData.from !== "archive") archiveTask(dragTaskData.pid, dragTaskData.tid);
+    } else if (dragTaskData.from === "archive") {
+      restoreTask(dragTaskData.pid, dragTaskData.tid, dragTaskData.pid, zone.getAttribute("data-date"));
     } else {
       moveTaskToDate(dragTaskData.pid, dragTaskData.tid, zone.getAttribute("data-date"));
     }
